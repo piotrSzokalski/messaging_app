@@ -1,30 +1,21 @@
 import 'package:flutter/material.dart';
 
-import 'package:messaging_app/router/router.dart';
+class Register extends StatefulWidget {
+  const Register({super.key});
 
-// class Login extends StatelessWidget {
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       title: 'Login Page',
-//       theme: ThemeData(primarySwatch: Colors.blue),
-//       home: _Login(),
-//     );
-//   }
-// }
-
-class Login extends StatefulWidget {
   @override
-  _Login createState() => _Login();
+  State<Register> createState() => _RegisterState();
 }
 
-class _Login extends State<Login> {
+class _RegisterState extends State<Register> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  TextEditingController _usernameController = TextEditingController();
   TextEditingController _emailController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
+  TextEditingController _confirmPasswordController = TextEditingController();
 
   bool _passwordObscured = true;
-
+  bool _confirmPasswordObscured = true;
   void _submitForm() {
     if (_formKey.currentState!.validate()) {
       print("Email: ${_emailController.text}");
@@ -33,13 +24,11 @@ class _Login extends State<Login> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Login Page')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
+  Widget build(BuildContext context) => Scaffold(
+        appBar: AppBar(title: const Text('Register')),
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(children: [
             Expanded(
               child: Form(
                 key: _formKey,
@@ -48,10 +37,20 @@ class _Login extends State<Login> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
                     TextFormField(
+                      controller: _usernameController,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: const InputDecoration(labelText: 'Username'),
+                      validator: (String? value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your email';
+                        }
+                        return null;
+                      },
+                    ),
+                    TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
-                      decoration:
-                          const InputDecoration(labelText: 'Username or Email'),
+                      decoration: const InputDecoration(labelText: 'Email'),
                       validator: (String? value) {
                         if (value == null || value.isEmpty) {
                           return 'Please enter your email';
@@ -72,6 +71,28 @@ class _Login extends State<Login> {
                                 });
                               },
                               icon: Icon(_passwordObscured
+                                  ? Icons.visibility
+                                  : Icons.visibility_off))),
+                      validator: (String? value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your password';
+                        }
+                        return null;
+                      },
+                    ),
+                    TextFormField(
+                      controller: _confirmPasswordController,
+                      obscureText: _confirmPasswordObscured,
+                      decoration: InputDecoration(
+                          labelText: 'Password',
+                          suffixIcon: IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  _confirmPasswordObscured =
+                                      !_confirmPasswordObscured;
+                                });
+                              },
+                              icon: Icon(_confirmPasswordObscured
                                   ? Icons.visibility
                                   : Icons.visibility_off))),
                       validator: (String? value) {
@@ -103,28 +124,7 @@ class _Login extends State<Login> {
                 ),
               ),
             ),
-            Container(
-              padding: const EdgeInsets.all(10),
-              child: Row(
-                children: [
-                  const Text("Don't have an account? "),
-                  GestureDetector(
-                    child: const Text("Sing up",
-                        style: TextStyle(
-                          color: Colors.blue, // Change color to mimic a link
-                          decoration: TextDecoration.underline, // Add underline
-                        )),
-                    onTap: () {
-                      print("test");
-                      router.go("/register");
-                    },
-                  ),
-                ],
-              ),
-            )
-          ],
+          ]),
         ),
-      ),
-    );
-  }
+      );
 }
