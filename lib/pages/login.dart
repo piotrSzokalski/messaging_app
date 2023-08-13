@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'package:messaging_app/router/router.dart';
+import 'package:messaging_app/services/auth_service.dart';
+import 'package:provider/provider.dart';
 
 // class Login extends StatelessWidget {
 //   @override
@@ -25,10 +27,20 @@ class _Login extends State<Login> {
 
   bool _passwordObscured = true;
 
-  void _submitForm() {
+  void _login() {
     if (_formKey.currentState!.validate()) {
       print("Email: ${_emailController.text}");
       print("Password: ${_passwordController.text}");
+    }
+
+    final authService = Provider.of<AuthService>(context, listen: false);
+
+    try {
+      authService.singInWithEmailAndPassword(
+          _emailController.text, _passwordController.text);
+    } catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
 
@@ -83,7 +95,7 @@ class _Login extends State<Login> {
                     ),
                     const SizedBox(height: 24.0),
                     ElevatedButton(
-                      onPressed: _submitForm,
+                      onPressed: _login,
                       child: const Text('Login'),
                     ),
                     const Center(

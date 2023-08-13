@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
@@ -7,10 +8,11 @@ class Channels extends StatefulWidget {
 }
 
 class _Channels extends State {
+  var user = FirebaseAuth.instance.currentUser;
   @override
   Widget build(BuildContext context) => Scaffold(
         body: Center(
-          child: Text("Channels"),
+          child: Text(user.toString()),
         ),
       );
 }
