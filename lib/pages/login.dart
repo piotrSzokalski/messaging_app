@@ -4,16 +4,7 @@ import 'package:messaging_app/router/router.dart';
 import 'package:messaging_app/services/auth_service.dart';
 import 'package:provider/provider.dart';
 
-// class Login extends StatelessWidget {
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       title: 'Login Page',
-//       theme: ThemeData(primarySwatch: Colors.blue),
-//       home: _Login(),
-//     );
-//   }
-// }
+import 'package:firebase_auth/firebase_auth.dart';
 
 class Login extends StatefulWidget {
   @override
@@ -27,7 +18,7 @@ class _Login extends State<Login> {
 
   bool _passwordObscured = true;
 
-  void _login() {
+  Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
       print("Email: ${_emailController.text}");
       print("Password: ${_passwordController.text}");
@@ -35,8 +26,13 @@ class _Login extends State<Login> {
 
     final authService = Provider.of<AuthService>(context, listen: false);
 
+    FirebaseAuth.instance.idTokenChanges().listen((event) {
+      print("token changed");
+      router.goNamed("home");
+    });
+
     try {
-      authService.singInWithEmailAndPassword(
+      await authService.singInWithEmailAndPassword(
           _emailController.text, _passwordController.text);
     } catch (e) {
       ScaffoldMessenger.of(context)
@@ -47,7 +43,7 @@ class _Login extends State<Login> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Login Page')),
+      appBar: AppBar(title: Text(router.routeInformationParser.toString())),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -119,16 +115,20 @@ class _Login extends State<Login> {
               padding: const EdgeInsets.all(10),
               child: Row(
                 children: [
-                  const Text("Don't have an account? "),
+                  const Text(
+                    "Don't have an account? ",
+                    style: TextStyle(fontSize: 18),
+                  ),
                   GestureDetector(
                     child: const Text("Sing up",
                         style: TextStyle(
                           color: Colors.blue, // Change color to mimic a link
                           decoration: TextDecoration.underline, // Add underline
+                          fontSize: 18,
                         )),
                     onTap: () {
-                      print("test");
-                      router.go("/register");
+                      print("sing up button pressed");
+                      router.goNamed("register");
                     },
                   ),
                 ],

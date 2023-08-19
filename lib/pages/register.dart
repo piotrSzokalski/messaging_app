@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:messaging_app/services/auth_service.dart';
+import 'package:provider/provider.dart';
 
 class Register extends StatefulWidget {
   const Register({super.key});
@@ -20,6 +22,11 @@ class _RegisterState extends State<Register> {
     if (_formKey.currentState!.validate()) {
       print("Email: ${_emailController.text}");
       print("Password: ${_passwordController.text}");
+
+      final authService = Provider.of<AuthService>(context, listen: false);
+
+      authService.register(_usernameController.text, _emailController.text,
+          _passwordController.text);
     }
   }
 
@@ -105,7 +112,7 @@ class _RegisterState extends State<Register> {
                     const SizedBox(height: 24.0),
                     ElevatedButton(
                       onPressed: _submitForm,
-                      child: const Text('Login'),
+                      child: const Text('Register'),
                     ),
                     const Center(
                       child: Padding(
