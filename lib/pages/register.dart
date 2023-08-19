@@ -1,6 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:messaging_app/services/auth_service.dart';
 import 'package:provider/provider.dart';
+
+import '../router/router.dart';
 
 class Register extends StatefulWidget {
   const Register({super.key});
@@ -18,15 +21,23 @@ class _RegisterState extends State<Register> {
 
   bool _passwordObscured = true;
   bool _confirmPasswordObscured = true;
-  void _submitForm() {
-    if (_formKey.currentState!.validate()) {
-      print("Email: ${_emailController.text}");
-      print("Password: ${_passwordController.text}");
+  Future<void> _submitForm() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
 
-      final authService = Provider.of<AuthService>(context, listen: false);
+    FirebaseAuth.instance.idTokenChanges().listen((event) {
+      router.goNamed("home");
+    });
 
-      authService.register(_usernameController.text, _emailController.text,
-          _passwordController.text);
+    final authService = Provider.of<AuthService>(context, listen: false);
+
+    try {
+      await authService.register(_usernameController.text,
+          _emailController.text, _passwordController.text);
+    } catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
 
@@ -49,7 +60,7 @@ class _RegisterState extends State<Register> {
                       decoration: const InputDecoration(labelText: 'Username'),
                       validator: (String? value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter your email';
+                          return 'Please enter your usenamne';
                         }
                         return null;
                       },
@@ -104,7 +115,11 @@ class _RegisterState extends State<Register> {
                                   : Icons.visibility_off))),
                       validator: (String? value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter your password';
+                          return 'Please repeat the password';
+                        }
+                        if (_passwordController.text !=
+                            _confirmPasswordController.text) {
+                          return 'Passwords do not mach';
                         }
                         return null;
                       },

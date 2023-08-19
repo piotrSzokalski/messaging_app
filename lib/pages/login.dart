@@ -19,15 +19,14 @@ class _Login extends State<Login> {
   bool _passwordObscured = true;
 
   Future<void> _login() async {
-    if (_formKey.currentState!.validate()) {
-      print("Email: ${_emailController.text}");
-      print("Password: ${_passwordController.text}");
+    if (!_formKey.currentState!.validate()) {
+      return;
     }
-
+    print("Email: ${_emailController.text}");
+    print("Password: ${_passwordController.text}");
     final authService = Provider.of<AuthService>(context, listen: false);
 
     FirebaseAuth.instance.idTokenChanges().listen((event) {
-      print("token changed");
       router.goNamed("home");
     });
 

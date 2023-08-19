@@ -36,12 +36,7 @@ final GoRouter router = GoRouter(
     ],
     redirect: (BuildContext context, GoRouterState state) {
       var user = FirebaseAuth.instance.currentUser;
-      // print(state.fullPath);
       if (user == null && state.fullPath.toString() != '/login/register') {
-        // print("here");
-        // print(user.toString());
-        // print("____________________");
-        // print(state.fullPath.toString());
         return "/login";
       }
     });
