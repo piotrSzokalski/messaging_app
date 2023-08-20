@@ -1,10 +1,22 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:messaging_app/services/chats_service.dart';
 import 'package:provider/provider.dart';
 
 import '../router/router.dart';
 import '../services/auth_service.dart';
+
+class MessageModel extends ChangeNotifier {
+  Stream<List<String>> get messagesStream async* {
+    for (int i = 1; i <= 5; i++) {
+      await Future.delayed(Duration(seconds: 1));
+      yield List.generate(i, (index) => 'Message $index');
+    }
+  }
+}
 
 class Channels extends StatefulWidget {
   @override
@@ -14,14 +26,12 @@ class Channels extends StatefulWidget {
 class _Channels extends State {
   var user = FirebaseAuth.instance.currentUser;
 
-  Future<void> _logout() async {
-    print(router.configuration);
-    print('______________________________');
-    router.goNamed('login');
-    print(router.configuration);
+  ChatService chatService = new ChatService();
 
-    return;
+  Future<void> _logout() async {
     final authService = Provider.of<AuthService>(context, listen: false);
+    final chatService = Provider.of<ChatService>(context, listen: false);
+
     authService.logout();
     FirebaseAuth.instance.idTokenChanges().listen((event) {
       print("going to login");
@@ -30,22 +40,67 @@ class _Channels extends State {
     router.goNamed("home");
   }
 
+  void test() {}
+
+  void _updateSearchQuery(String newQuery) {
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(leading: Icon(Icons.account_circle_rounded)),
-        drawer: Drawer(
-          child: ListView(children: [
-            const DrawerHeader(
-              child: Text("Header"),
+      appBar: AppBar(leading: Icon(Icons.account_circle_rounded)),
+      drawer: Drawer(
+        child: ListView(children: [
+          const DrawerHeader(
+            child: Text("Header"),
+          ),
+          ListTile(
+            title: const Text("Logout"),
+            onTap: _logout,
+          )
+        ]),
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              onChanged: _updateSearchQuery,
+              decoration: InputDecoration(
+                labelText: 'Search',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(25.0)),
+                ),
+              ),
             ),
-            ListTile(
-              title: const Text("Logout"),
-              onTap: _logout,
-            )
-          ]),
-        ),
-        body: Center(
-          child: Text(user.toString()),
-        ),
-      );
+          ),
+          Expanded(
+            child: StreamBuilder(
+                stream: chatService.getChats(),
+                builder: (
+                  context,
+                  snapshot,
+                ) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return CircularProgressIndicator();
+                  } else if (snapshot.hasData) {
+                    final chatsList = snapshot.data as List<String>;
+                    print("_____________");
+                    print(chatsList);
+                    return ListView.builder(
+                      itemBuilder: (context, index) {
+                        return ListTile(
+                          title: Text(chatsList[index].toString()),
+                        );
+                      },
+                      itemCount: chatsList.length,
+                    );
+                  } else {
+                    return const Text('no data');
+                  }
+                }),
+          )
+        ],
+      ));
 }
