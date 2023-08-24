@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:messaging_app/models/message.dart';
 import 'package:messaging_app/services/chats_service.dart';
+import 'package:messaging_app/services/user_service.dart';
 import 'package:provider/provider.dart';
 
 class ChannelPage extends StatefulWidget {
@@ -17,30 +18,21 @@ class _ChannelPage extends State<ChannelPage> {
 
   _ChannelPage(this._id);
 
+  TextEditingController _inputController = TextEditingController();
+
+  void _sendMessage() async {
+    String? username = await Provider.of<UserService>(context, listen: false)
+        .getUserName()
+        .first;
+
+    if (username != null) {
+      Provider.of<ChatService>(context, listen: false).sendMessage(
+          chatId: _id, author: username, text: _inputController.text);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // ChatService chatService = ChatService();
-    // var x = chatService.getMessages(_id!);
-    // print(x);
-
-    // return Scaffold(
-    //   appBar: AppBar(),
-    //   body: Column(children: [
-    //     Text(_id!),
-    //     StreamBuilder(
-    //         stream: Provider.of<ChatService>(context).getMessages(_id!),
-    //         builder: (context, snapshot) {
-    //           if (snapshot.connectionState == ConnectionState.waiting) {
-    //             return CircularProgressIndicator();
-    //           } else if (snapshot.hasData) {
-    //             //Create list with placeholders
-    //           } else {
-    //             return Text("No data");
-    //           }
-    //         })
-    //   ]),
-    // );
-
     return Scaffold(
       appBar: AppBar(
         title: Text(_id!),
@@ -48,60 +40,65 @@ class _ChannelPage extends State<ChannelPage> {
       body: Column(
         children: [
           Expanded(child: buildMessages(context)),
-          Align(
-            alignment: Alignment.bottomLeft,
-            child: Container(
-              padding: const EdgeInsets.only(left: 10, bottom: 10, top: 10),
-              height: 60,
-              width: double.infinity,
-              color: Colors.white,
-              child: Row(
-                children: <Widget>[
-                  GestureDetector(
-                    onTap: () {},
-                    child: Container(
-                      height: 30,
-                      width: 30,
-                      decoration: BoxDecoration(
-                        color: Colors.lightBlue,
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      child: const Icon(
-                        Icons.add,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(
-                    width: 15,
-                  ),
-                  const Expanded(
-                    child: TextField(
-                      decoration: InputDecoration(
-                          hintText: "Write message...",
-                          hintStyle: TextStyle(color: Colors.black54),
-                          border: InputBorder.none),
-                    ),
-                  ),
-                  const SizedBox(
-                    width: 15,
-                  ),
-                  FloatingActionButton(
-                    onPressed: () {},
-                    child: const Icon(
-                      Icons.send,
-                      color: Colors.white,
-                      size: 18,
-                    ),
-                    backgroundColor: Colors.blue,
-                    elevation: 0,
-                  ),
-                ],
+          buildInput(),
+        ],
+      ),
+    );
+  }
+
+  Align buildInput() {
+    return Align(
+      alignment: Alignment.bottomLeft,
+      child: Container(
+        padding: const EdgeInsets.only(left: 10, bottom: 10, top: 10),
+        height: 60,
+        width: double.infinity,
+        color: Colors.white,
+        child: Row(
+          children: <Widget>[
+            GestureDetector(
+              onTap: () {},
+              child: Container(
+                height: 30,
+                width: 30,
+                decoration: BoxDecoration(
+                  color: Colors.lightBlue,
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: const Icon(
+                  Icons.add,
+                  color: Colors.white,
+                  size: 20,
+                ),
               ),
             ),
-          ),
-        ],
+            const SizedBox(
+              width: 15,
+            ),
+            Expanded(
+              child: TextField(
+                decoration: InputDecoration(
+                    hintText: "Write message...",
+                    hintStyle: TextStyle(color: Colors.black54),
+                    border: InputBorder.none),
+                controller: _inputController,
+              ),
+            ),
+            const SizedBox(
+              width: 15,
+            ),
+            FloatingActionButton(
+              onPressed: _sendMessage,
+              child: const Icon(
+                Icons.send,
+                color: Colors.white,
+                size: 18,
+              ),
+              backgroundColor: Colors.blue,
+              elevation: 0,
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:messaging_app/router/router.dart';
 import 'package:messaging_app/services/auth_service.dart';
 import 'package:messaging_app/services/chats_service.dart';
+import 'package:messaging_app/services/user_service.dart';
 import 'package:provider/provider.dart';
 
 Future<void> main() async {
@@ -20,6 +21,7 @@ Future<void> main() async {
       ChangeNotifierProvider(
         create: (context) => ChatService(),
       ),
+      ChangeNotifierProvider(create: (context) => UserService())
     ],
     child: const MyApp(),
   ));

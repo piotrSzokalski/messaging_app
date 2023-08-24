@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:messaging_app/services/chats_service.dart';
+import 'package:messaging_app/services/user_service.dart';
 import 'package:provider/provider.dart';
 
 import '../router/router.dart';
@@ -52,7 +53,7 @@ class _Channels extends State {
   Widget build(BuildContext context) => Scaffold(
       appBar: AppBar(
         leading: Icon(Icons.account_circle_rounded),
-        title: Text("Usename"),
+        title: Text("channels"),
       ),
       drawer: buildDrawer(),
       body: Column(
@@ -77,8 +78,21 @@ class _Channels extends State {
   Drawer buildDrawer() {
     return Drawer(
       child: ListView(children: [
-        const DrawerHeader(
-          child: Text("Header"),
+        DrawerHeader(
+          child: Row(
+            children: [
+              Icon(Icons.account_circle_rounded),
+              StreamBuilder(
+                  stream: Provider.of<UserService>(context).getUserName(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData) {
+                      return Text(snapshot.data ?? "EE");
+                    } else {
+                      return Text("NO DATA");
+                    }
+                  })
+            ],
+          ),
         ),
         ListTile(
           title: const Text("Create new channel"),

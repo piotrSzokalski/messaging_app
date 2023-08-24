@@ -15,25 +15,30 @@ class ChatService extends ChangeNotifier {
   }
 
   Stream<List<Message>> getMessages(String id) {
-    var x = _firestore
+    return _firestore
         .collection("chats")
         .doc(id)
         .collection("messages")
+        .orderBy("timestamp")
         .snapshots()
         .map((snapshot) => snapshot.docs.map((doc) {
-              print("________________");
-              // print(doc.id);
-              // print(doc.data()['text']);
-              // print(doc.data()['author']);
-              // print(doc.data()['timestamp']);
               var x = Message(
                   id: doc.id,
                   timestamp: doc.data()['timestamp'],
                   author: doc.data()['author'],
                   text: doc.data()['text']);
-              print(x.toString());
               return x;
             }).toList());
-    return x;
+  }
+
+  sendMessage({String? chatId, required String author, required String text}) {
+    if (chatId == null) {
+      return;
+    }
+    _firestore
+        .collection("chats")
+        .doc(chatId)
+        .collection("messages")
+        .add({'author': author, 'text': text, 'timestamp': Timestamp.now()});
   }
 }
