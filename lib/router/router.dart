@@ -6,8 +6,11 @@ import 'package:messaging_app/pages/login.dart';
 import 'package:messaging_app/pages/channels.dart';
 import 'package:messaging_app/pages/register.dart';
 
+import '../pages/channel_page.dart';
+
 //register
 final GoRouter router = GoRouter(
+    debugLogDiagnostics: true,
     routes: <RouteBase>[
       GoRoute(
         name: 'home',
@@ -31,6 +34,12 @@ final GoRouter router = GoRouter(
                   },
                 ),
               ]),
+          GoRoute(
+              path: "channel/:id",
+              name: "channel",
+              builder: (BuildContext context, GoRouterState state) {
+                return ChannelPage(id: state.pathParameters['id']);
+              })
         ],
       ),
     ],

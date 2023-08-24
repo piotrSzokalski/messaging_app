@@ -40,7 +40,9 @@ class _Channels extends State {
     router.goNamed("home");
   }
 
-  void test() {}
+  void _openChannel(String id) {
+    router.go("/channel/$id");
+  }
 
   void _updateSearchQuery(String newQuery) {
     setState(() {});
@@ -48,25 +50,18 @@ class _Channels extends State {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-      appBar: AppBar(leading: Icon(Icons.account_circle_rounded)),
-      drawer: Drawer(
-        child: ListView(children: [
-          const DrawerHeader(
-            child: Text("Header"),
-          ),
-          ListTile(
-            title: const Text("Logout"),
-            onTap: _logout,
-          )
-        ]),
+      appBar: AppBar(
+        leading: Icon(Icons.account_circle_rounded),
+        title: Text("Usename"),
       ),
+      drawer: buildDrawer(),
       body: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
               onChanged: _updateSearchQuery,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Search',
                 prefixIcon: Icon(Icons.search),
                 border: OutlineInputBorder(
@@ -75,32 +70,55 @@ class _Channels extends State {
               ),
             ),
           ),
-          Expanded(
-            child: StreamBuilder(
-                stream: chatService.getChats(),
-                builder: (
-                  context,
-                  snapshot,
-                ) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return CircularProgressIndicator();
-                  } else if (snapshot.hasData) {
-                    final chatsList = snapshot.data as List<String>;
-                    print("_____________");
-                    print(chatsList);
-                    return ListView.builder(
-                      itemBuilder: (context, index) {
-                        return ListTile(
-                          title: Text(chatsList[index].toString()),
-                        );
-                      },
-                      itemCount: chatsList.length,
-                    );
-                  } else {
-                    return const Text('no data');
-                  }
-                }),
-          )
+          buildChatList()
         ],
       ));
+
+  Drawer buildDrawer() {
+    return Drawer(
+      child: ListView(children: [
+        const DrawerHeader(
+          child: Text("Header"),
+        ),
+        ListTile(
+          title: const Text("Create new channel"),
+          onTap: () => router.push("/"),
+        ),
+        ListTile(
+          title: const Text("Logout"),
+          onTap: _logout,
+        )
+      ]),
+    );
+  }
+
+  Expanded buildChatList() {
+    return Expanded(
+      child: StreamBuilder(
+          stream: chatService.getChats(),
+          builder: (
+            context,
+            snapshot,
+          ) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return CircularProgressIndicator();
+            } else if (snapshot.hasData) {
+              final chatsList = snapshot.data as List<String>;
+              print("_____________");
+              print(chatsList);
+              return ListView.builder(
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    title: Text(chatsList[index].toString()),
+                    onTap: () => _openChannel(chatsList[index].toString()),
+                  );
+                },
+                itemCount: chatsList.length,
+              );
+            } else {
+              return const Text('no data');
+            }
+          }),
+    );
+  }
 }
