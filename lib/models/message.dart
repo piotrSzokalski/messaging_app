@@ -4,7 +4,14 @@ import 'package:messaging_app/models/user.dart';
 
 class Message {
   String? id;
-  Timestamp? timestampl;
-  User? author;
+  Timestamp? timestamp;
+  String? author;
   String? text;
+
+  Message({this.id, this.timestamp, this.author, this.text});
+
+  @override
+  String toString() {
+    return 'Message{id: $id, timestamp: $timestamp, author: $author, text: $text}';
+  }
 }

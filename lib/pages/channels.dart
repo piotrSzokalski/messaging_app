@@ -95,7 +95,7 @@ class _Channels extends State {
   Expanded buildChatList() {
     return Expanded(
       child: StreamBuilder(
-          stream: chatService.getChats(),
+          stream: Provider.of<ChatService>(context).getChats(),
           builder: (
             context,
             snapshot,
@@ -104,17 +104,14 @@ class _Channels extends State {
               return CircularProgressIndicator();
             } else if (snapshot.hasData) {
               final chatsList = snapshot.data as List<String>;
-              print("_____________");
-              print(chatsList);
+              //print("_____________");
+              //print(chatsList);
               return ListView.builder(
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    title: Text(chatsList[index].toString()),
-                    onTap: () => _openChannel(chatsList[index].toString()),
-                  );
-                },
-                itemCount: chatsList.length,
-              );
+                  itemCount: chatsList.length,
+                  itemBuilder: (context, index) => ListTile(
+                        title: Text(chatsList[index].toString()),
+                        onTap: () => _openChannel(chatsList[index].toString()),
+                      ));
             } else {
               return const Text('no data');
             }
