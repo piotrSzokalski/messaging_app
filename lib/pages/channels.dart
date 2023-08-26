@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 import '../router/router.dart';
 import '../services/auth_service.dart';
 
+//      ???????
 class MessageModel extends ChangeNotifier {
   Stream<List<String>> get messagesStream async* {
     for (int i = 1; i <= 5; i++) {
@@ -26,6 +27,12 @@ class Channels extends StatefulWidget {
 
 class _Channels extends State {
   var user = FirebaseAuth.instance.currentUser;
+
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  var _newChannelNameController = TextEditingController();
+
+  bool newChannelNameValid = false;
 
   ChatService chatService = new ChatService();
 
@@ -47,6 +54,33 @@ class _Channels extends State {
 
   void _updateSearchQuery(String newQuery) {
     setState(() {});
+  }
+
+  void _createChannel() {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+  }
+
+  void _opneChannelCreator(BuildContext context) {
+    showDialog(
+        context: context,
+        builder: (builder) {
+          return AlertDialog(
+            title: Text("Name of channel"),
+            content: TextFormField(
+              controller: _newChannelNameController,
+            ),
+            actions: [
+              IconButton(
+                  onPressed: () async {
+                    await Provider.of<ChatService>(context, listen: false)
+                        .createChannel(_newChannelNameController.text);
+                  },
+                  icon: Icon(Icons.save))
+            ],
+          );
+        });
   }
 
   @override
@@ -96,7 +130,7 @@ class _Channels extends State {
         ),
         ListTile(
           title: const Text("Create new channel"),
-          onTap: () => router.push("/"),
+          onTap: () => _opneChannelCreator(context),
         ),
         ListTile(
           title: const Text("Logout"),

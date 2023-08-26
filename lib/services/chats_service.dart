@@ -31,7 +31,8 @@ class ChatService extends ChangeNotifier {
             }).toList());
   }
 
-  sendMessage({String? chatId, required String author, required String text}) {
+  void sendMessage(
+      {String? chatId, required String author, required String text}) {
     if (chatId == null) {
       return;
     }
@@ -40,5 +41,22 @@ class ChatService extends ChangeNotifier {
         .doc(chatId)
         .collection("messages")
         .add({'author': author, 'text': text, 'timestamp': Timestamp.now()});
+  }
+
+  Future<bool> nameAvailable(String id) {
+    return _firestore
+        .collection("chats")
+        .doc(id)
+        .get()
+        .then((doc) => !doc.exists);
+  }
+
+  Future<bool> createChannel(String id) async {
+    bool available = await nameAvailable(id);
+    if (!available) {
+      return false;
+    }
+    await _firestore.collection("chats").doc(id).set({});
+    return true;
   }
 }

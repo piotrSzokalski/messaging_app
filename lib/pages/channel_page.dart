@@ -118,46 +118,45 @@ class _ChannelPage extends State<ChannelPage> {
             return const Text("No messages available");
           }
 
-          // Create a list to accumulate the ListTile widgets
-          List<Widget> listItems = [];
-
-          for (Message message in messages) {
-            listItems.add(Container(
-              padding: const EdgeInsets.only(
-                  left: 0, right: 14, top: 10, bottom: 10),
-              child: Container(
-                decoration: BoxDecoration(color: Colors.grey.shade100),
-                padding: const EdgeInsets.all(16),
-                child: Column(children: [
-                  Row(
-                    children: [
-                      Text(
-                        message.author ?? "Unknown",
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        message.timestamp!
-                            .toDate()
-                            .toLocal()
-                            .toString()
-                            .substring(0, 16),
-                        style: const TextStyle(fontWeight: FontWeight.w200),
-                      ),
-                    ],
-                  ),
-                  Align(
+          return ListView.builder(
+            itemCount: messages.length,
+            itemBuilder: (context, index) {
+              Message message = messages[index];
+              return Container(
+                padding: const EdgeInsets.only(
+                    left: 0, right: 14, top: 10, bottom: 10),
+                child: Container(
+                  decoration: BoxDecoration(color: Colors.grey.shade100),
+                  padding: const EdgeInsets.all(16),
+                  child: Column(children: [
+                    Row(
+                      children: [
+                        Text(
+                          message.author ?? "Unknown",
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          message.timestamp!
+                              .toDate()
+                              .toLocal()
+                              .toString()
+                              .substring(0, 16),
+                          style: const TextStyle(fontWeight: FontWeight.w200),
+                        ),
+                      ],
+                    ),
+                    Align(
                       alignment: Alignment.centerLeft,
                       child: Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Text(message.text ?? "E"))),
-                ]),
-              ),
-            ));
-          }
-
-          return Column(
-            children: listItems,
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(message.text ?? "E"),
+                      ),
+                    ),
+                  ]),
+                ),
+              );
+            },
           );
         } else {
           return const Text("No data");

@@ -129,19 +129,6 @@ class _RegisterState extends State<Register> {
                       onPressed: _submitForm,
                       child: const Text('Register'),
                     ),
-                    const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(16.0),
-                        child: Text(
-                          "Forgot your password?",
-                          style: TextStyle(
-                            color: Colors.blue, // Change color to mimic a link
-                            decoration:
-                                TextDecoration.underline, // Add underline
-                          ),
-                        ),
-                      ),
-                    ),
                   ],
                 ),
               ),
