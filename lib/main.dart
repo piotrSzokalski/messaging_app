@@ -5,14 +5,29 @@ import 'package:go_router/go_router.dart';
 
 import 'package:messaging_app/router/router.dart';
 import 'package:messaging_app/services/auth_service.dart';
+import 'package:messaging_app/services/chats_service.dart';
+import 'package:messaging_app/services/user_service.dart';
 import 'package:provider/provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  runApp(ChangeNotifierProvider(
-      create: (context) => AuthService(), child: const MyApp()));
+  runApp(MultiProvider(
+    providers: [
+      ChangeNotifierProvider(
+        create: (context) => AuthService(),
+      ),
+      ChangeNotifierProvider(
+        create: (context) => ChatService(),
+      ),
+      ChangeNotifierProvider(create: (context) => UserService())
+    ],
+    child: const MyApp(),
+  ));
+
+  // runApp(ChangeNotifierProvider(
+  //     create: (context) => AuthService(), child: const MyApp()));
 }
 
 class MyApp extends StatelessWidget {
