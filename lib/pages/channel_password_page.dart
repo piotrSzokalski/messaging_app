@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:messaging_app/services/chats_service.dart';
 import 'package:provider/provider.dart';
 
+import '../router/router.dart';
+
 class ChannelPasswordPage extends StatefulWidget {
   String? id;
 
@@ -17,16 +19,19 @@ class _ChannelPasswordPageState extends State<ChannelPasswordPage> {
 
   final _channelPasswordController = TextEditingController();
 
-  String _ttt = "_____()_____";
-
   _ChannelPasswordPageState(this._id);
 
-  _unlockChannel() async {
+  void _unlockChannel() async {
     var respone = await Provider.of<ChatService>(context, listen: false)
-        .unlock(_id!, _channelPasswordController.text);
-    setState(() {
-      _ttt = respone;
-    });
+        .unlockForCurrentUser(_id!, _channelPasswordController.text);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(respone ? "Password correct" : "Password Incorrect")));
+
+    if (!respone) {
+      return;
+    }
+    await Future.delayed(Duration(seconds: 2));
+    router.go("/channel/$_id");
   }
 
   @override
@@ -64,7 +69,6 @@ class _ChannelPasswordPageState extends State<ChannelPasswordPage> {
               onPressed: _unlockChannel,
               child: Text("Access Channel"),
             ),
-            Text(_ttt)
           ],
         ),
       ),

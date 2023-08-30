@@ -4,7 +4,7 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:messaging_app/models/chat.dart';
+
 import 'package:messaging_app/models/message.dart';
 import 'package:crypt/crypt.dart';
 
@@ -81,10 +81,10 @@ class ChatService extends ChangeNotifier {
     }
 
     if (password == null || password!.isEmpty) {
-      await _firestore
-          .collection("chats")
-          .doc(id)
-          .set({'owner': _firebaseAuth.currentUser?.email});
+      await _firestore.collection("chats").doc(id).set({
+        'owner': _firebaseAuth.currentUser?.email,
+        'members': [_firebaseAuth.currentUser?.email]
+      });
       return true;
     }
 
@@ -93,6 +93,7 @@ class ChatService extends ChangeNotifier {
 
     await _firestore.collection("chats").doc(id).set({
       'owner': _firebaseAuth.currentUser?.email,
+      'members': [_firebaseAuth.currentUser?.email],
       'passwordSecured': true,
       'password': saltedPasswordHash,
       'salt': salt
@@ -106,7 +107,18 @@ class ChatService extends ChangeNotifier {
     return data!.containsKey("passwordSecured") ? true : false;
   }
 
-  Future<String> unlock(String chatId, String password) async {
+  Future<bool> isLockedForUser(String id) async {
+    var snapshot = await _firestore.collection("chats").doc(id).get();
+    var data = snapshot.data();
+    List<dynamic> members = data?['members'];
+    var currentUser = _firebaseAuth.currentUser?.email;
+    return (data!.containsKey("passwordSecured") &&
+            !members.contains(currentUser))
+        ? true
+        : false;
+  }
+
+  Future<bool> unlockForCurrentUser(String chatId, String password) async {
     var snapshot = await _firestore.collection("chats").doc(chatId).get();
     var data = snapshot.data();
     String salt = data!['salt'];
@@ -114,9 +126,24 @@ class ChatService extends ChangeNotifier {
 
     String saltedPasswordHash = Crypt.sha256(password, salt: salt).toString();
 
-    if (saltedPasswordHash == storedPassword) {
-      return "Password Correct";
+    List<dynamic> members = data['members'];
+    var currentUser = _firebaseAuth.currentUser?.email;
+
+    bool curentUserIsAMember = members.contains(currentUser);
+
+    if (saltedPasswordHash != storedPassword) {
+      return false;
     }
-    return "INCORECT";
+
+    if (!curentUserIsAMember) {
+      _firestore.collection("chats").doc(chatId).update({
+        "members": FieldValue.arrayUnion([_firebaseAuth.currentUser?.email])
+      });
+      ;
+    }
+
+    return true;
   }
 }
+
+//

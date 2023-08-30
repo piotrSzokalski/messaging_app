@@ -47,23 +47,14 @@ class _Channels extends State {
   }
 
   void _openChannel(String id) async {
-    bool protected =
-        await Provider.of<ChatService>(context, listen: false).isProtected(id);
+    bool protected = await Provider.of<ChatService>(context, listen: false)
+        .isLockedForUser(id);
     if (protected) {
       print(id);
       router.go("/unlock/$id");
       return;
     }
     router.go("/channel/$id");
-
-    //     .then((protected) {
-    //   print(protected);
-    //   if (protected) {
-    //     router.go("/unlock/$id");
-    //   } else {
-    //     router.go("/channel/$id");
-    //   }
-    // });
   }
 
   void _updateSearchQuery(String newQuery) {
