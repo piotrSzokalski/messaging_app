@@ -1,10 +1,16 @@
+import 'dart:convert';
+import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:messaging_app/models/chat.dart';
 import 'package:messaging_app/models/message.dart';
+import 'package:crypt/crypt.dart';
 
 class ChatService extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
 
   Stream<List<String>> getChats() {
     return _firestore
@@ -55,7 +61,17 @@ class ChatService extends ChangeNotifier {
         .then((doc) => !doc.exists);
   }
 
-  Future<bool> createChannel(String id) async {
+  String _generateRandomString(int length) {
+    final random = Random();
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    final String generatedString = String.fromCharCodes(Iterable.generate(
+      length,
+      (_) => chars.codeUnitAt(random.nextInt(chars.length)),
+    ));
+    return generatedString;
+  }
+
+  Future<bool> createChannel({required String id, String? password}) async {
     if (id.isEmpty) {
       return Future.value(false);
     }
@@ -63,7 +79,44 @@ class ChatService extends ChangeNotifier {
     if (!available) {
       return false;
     }
-    await _firestore.collection("chats").doc(id).set({});
+
+    if (password == null || password!.isEmpty) {
+      await _firestore
+          .collection("chats")
+          .doc(id)
+          .set({'owner': _firebaseAuth.currentUser?.email});
+      return true;
+    }
+
+    String salt = _generateRandomString(12);
+    String saltedPasswordHash = Crypt.sha256(password, salt: salt).toString();
+
+    await _firestore.collection("chats").doc(id).set({
+      'owner': _firebaseAuth.currentUser?.email,
+      'passwordSecured': true,
+      'password': saltedPasswordHash,
+      'salt': salt
+    });
     return true;
+  }
+
+  Future<bool> isProtected(String id) async {
+    var snapshot = await _firestore.collection("chats").doc(id).get();
+    var data = snapshot.data();
+    return data!.containsKey("passwordSecured") ? true : false;
+  }
+
+  Future<String> unlock(String chatId, String password) async {
+    var snapshot = await _firestore.collection("chats").doc(chatId).get();
+    var data = snapshot.data();
+    String salt = data!['salt'];
+    String storedPassword = data['password'];
+
+    String saltedPasswordHash = Crypt.sha256(password, salt: salt).toString();
+
+    if (saltedPasswordHash == storedPassword) {
+      return "Password Correct";
+    }
+    return "INCORECT";
   }
 }

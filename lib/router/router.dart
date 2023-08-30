@@ -2,9 +2,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
+import 'package:messaging_app/pages/channel_password_page.dart';
 import 'package:messaging_app/pages/login.dart';
 import 'package:messaging_app/pages/channels.dart';
 import 'package:messaging_app/pages/register.dart';
+import 'package:messaging_app/services/chats_service.dart';
+import 'package:provider/provider.dart';
 
 import '../pages/channel_page.dart';
 
@@ -39,6 +42,15 @@ final GoRouter router = GoRouter(
               name: "channel",
               builder: (BuildContext context, GoRouterState state) {
                 return ChannelPage(id: state.pathParameters['id']);
+              },
+              routes: []),
+          GoRoute(
+              path: "unlock/:id",
+              name: 'unlock-channel',
+              builder: (BuildContext context, GoRouterState state) {
+                print("In router");
+                var x = state.pathParameters['id'];
+                return ChannelPasswordPage(id: x);
               })
         ],
       ),

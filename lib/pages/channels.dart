@@ -10,16 +10,6 @@ import 'package:provider/provider.dart';
 import '../router/router.dart';
 import '../services/auth_service.dart';
 
-//      ???????
-class MessageModel extends ChangeNotifier {
-  Stream<List<String>> get messagesStream async* {
-    for (int i = 1; i <= 5; i++) {
-      await Future.delayed(Duration(seconds: 1));
-      yield List.generate(i, (index) => 'Message $index');
-    }
-  }
-}
-
 class Channels extends StatefulWidget {
   @override
   State<StatefulWidget> createState() => _Channels();
@@ -34,7 +24,11 @@ class _Channels extends State {
 
   bool _nameCorrect = false;
 
+  bool _secureWihtPassword = false;
+
   final _newChannelNameController = TextEditingController();
+
+  final _channelPasswordController = TextEditingController();
 
   bool newChannelNameValid = false;
 
@@ -52,8 +46,24 @@ class _Channels extends State {
     router.goNamed("home");
   }
 
-  void _openChannel(String id) {
+  void _openChannel(String id) async {
+    bool protected =
+        await Provider.of<ChatService>(context, listen: false).isProtected(id);
+    if (protected) {
+      print(id);
+      router.go("/unlock/$id");
+      return;
+    }
     router.go("/channel/$id");
+
+    //     .then((protected) {
+    //   print(protected);
+    //   if (protected) {
+    //     router.go("/unlock/$id");
+    //   } else {
+    //     router.go("/channel/$id");
+    //   }
+    // });
   }
 
   void _updateSearchQuery(String newQuery) {
@@ -103,19 +113,39 @@ class _Channels extends State {
                       _errorMessage,
                       style: TextStyle(color: Colors.red),
                     ),
+                  Row(
+                    children: [
+                      Text("Secure with password?"),
+                      Checkbox(
+                          value: _secureWihtPassword,
+                          onChanged: (onChanged) => setStateInsideDialog(
+                              () => _secureWihtPassword = onChanged!)),
+                    ],
+                  ),
+                  if (_secureWihtPassword)
+                    TextFormField(
+                      controller: _channelPasswordController,
+                    )
                 ],
               ),
               actions: [
                 _nameCorrect
                     ? IconButton(
                         onPressed: () async {
+                          String? password = _secureWihtPassword
+                              ? _channelPasswordController.text
+                              : null;
                           bool correct = await Provider.of<ChatService>(context,
                                   listen: false)
-                              .createChannel(_newChannelNameController.text);
+                              .createChannel(
+                                  id: _newChannelNameController.text,
+                                  password: password);
+                          Navigator.pop(context);
                           Navigator.pop(context);
                           _newChannelNameController.clear();
+                          _channelPasswordController.clear();
                           ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: "Channel added "));
+                              SnackBar(content: Text("Chat added")));
                         },
                         icon: Icon(Icons.save),
                       )
@@ -202,8 +232,6 @@ class _Channels extends State {
               return CircularProgressIndicator();
             } else if (snapshot.hasData) {
               final chatsList = snapshot.data as List<String>;
-              //print("_____________");
-              //print(chatsList);
               return ListView.builder(
                   itemCount: chatsList.length,
                   itemBuilder: (context, index) => ListTile(
