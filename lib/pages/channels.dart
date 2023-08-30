@@ -32,6 +32,8 @@ class _Channels extends State {
 
   String _errorMessage = "";
 
+  bool _nameCorrect = false;
+
   final _newChannelNameController = TextEditingController();
 
   bool newChannelNameValid = false;
@@ -64,18 +66,6 @@ class _Channels extends State {
     }
   }
 
-  void _updateErrorMessage(String value, Function setStateCallback) {
-    Provider.of<ChatService>(context, listen: false)
-        .nameAvailable(value)
-        .then((available) {
-      setStateCallback(() {
-        _errorMessage = available
-            ? ""
-            : "The name is already taken. Please choose another name.";
-      });
-    });
-  }
-
   void _opneChannelCreator(BuildContext context) {
     showDialog(
       context: context,
@@ -90,8 +80,6 @@ class _Channels extends State {
                   TextFormField(
                     controller: _newChannelNameController,
                     onChanged: (value) {
-                      print(
-                          "__________________________HERE____________________________________");
                       if (value.isEmpty) {
                         setStateInsideDialog(() {
                           _errorMessage = "";
@@ -104,6 +92,8 @@ class _Channels extends State {
                           _errorMessage = available
                               ? ""
                               : "The name is already taken. Please choose another name.";
+
+                          _nameCorrect = available && value.isNotEmpty;
                         });
                       });
                     },
@@ -116,14 +106,20 @@ class _Channels extends State {
                 ],
               ),
               actions: [
-                IconButton(
-                  onPressed: () async {
-                    bool correct =
-                        await Provider.of<ChatService>(context, listen: false)
-                            .createChannel(_newChannelNameController.text);
-                  },
-                  icon: Icon(Icons.save),
-                ),
+                _nameCorrect
+                    ? IconButton(
+                        onPressed: () async {
+                          bool correct = await Provider.of<ChatService>(context,
+                                  listen: false)
+                              .createChannel(_newChannelNameController.text);
+                          Navigator.pop(context);
+                          _newChannelNameController.clear();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: "Channel added "));
+                        },
+                        icon: Icon(Icons.save),
+                      )
+                    : const Icon(Icons.save_outlined),
               ],
             );
           },
