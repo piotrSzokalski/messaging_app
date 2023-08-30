@@ -30,7 +30,9 @@ class _Channels extends State {
 
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-  var _newChannelNameController = TextEditingController();
+  String _errorMessage = "";
+
+  final _newChannelNameController = TextEditingController();
 
   bool newChannelNameValid = false;
 
@@ -62,52 +64,104 @@ class _Channels extends State {
     }
   }
 
+  void _updateErrorMessage(String value, Function setStateCallback) {
+    Provider.of<ChatService>(context, listen: false)
+        .nameAvailable(value)
+        .then((available) {
+      setStateCallback(() {
+        _errorMessage = available
+            ? ""
+            : "The name is already taken. Please choose another name.";
+      });
+    });
+  }
+
   void _opneChannelCreator(BuildContext context) {
     showDialog(
-        context: context,
-        builder: (builder) {
-          return AlertDialog(
-            title: Text("Name of channel"),
-            content: TextFormField(
-              controller: _newChannelNameController,
-            ),
-            actions: [
-              IconButton(
+      context: context,
+      builder: (builder) {
+        return StatefulBuilder(
+          builder: (context, setStateInsideDialog) {
+            return AlertDialog(
+              title: const Text("Name of channel"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: _newChannelNameController,
+                    onChanged: (value) {
+                      print(
+                          "__________________________HERE____________________________________");
+                      if (value.isEmpty) {
+                        setStateInsideDialog(() {
+                          _errorMessage = "";
+                        });
+                      }
+                      Provider.of<ChatService>(context, listen: false)
+                          .nameAvailable(value)
+                          .then((available) {
+                        setStateInsideDialog(() {
+                          _errorMessage = available
+                              ? ""
+                              : "The name is already taken. Please choose another name.";
+                        });
+                      });
+                    },
+                  ),
+                  if (_errorMessage.isNotEmpty)
+                    Text(
+                      _errorMessage,
+                      style: TextStyle(color: Colors.red),
+                    ),
+                ],
+              ),
+              actions: [
+                IconButton(
                   onPressed: () async {
-                    await Provider.of<ChatService>(context, listen: false)
-                        .createChannel(_newChannelNameController.text);
+                    bool correct =
+                        await Provider.of<ChatService>(context, listen: false)
+                            .createChannel(_newChannelNameController.text);
                   },
-                  icon: Icon(Icons.save))
-            ],
-          );
-        });
+                  icon: Icon(Icons.save),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-      appBar: AppBar(
-        leading: Icon(Icons.account_circle_rounded),
-        title: Text("channels"),
-      ),
-      drawer: buildDrawer(),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              onChanged: _updateSearchQuery,
-              decoration: const InputDecoration(
-                labelText: 'Search',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(25.0)),
+  Widget build(BuildContext context) {
+    _newChannelNameController.addListener(() {
+      print("TEST");
+    });
+    return Scaffold(
+        appBar: AppBar(
+          leading: Icon(Icons.account_circle_rounded),
+          title: Text("channels"),
+        ),
+        drawer: buildDrawer(),
+        body: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: TextField(
+                onChanged: _updateSearchQuery,
+                decoration: const InputDecoration(
+                  labelText: 'Search',
+                  prefixIcon: Icon(Icons.search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(25.0)),
+                  ),
                 ),
               ),
             ),
-          ),
-          buildChatList()
-        ],
-      ));
+            buildChatList()
+          ],
+        ));
+  }
 
   Drawer buildDrawer() {
     return Drawer(

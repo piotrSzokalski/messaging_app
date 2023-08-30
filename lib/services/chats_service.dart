@@ -44,6 +44,10 @@ class ChatService extends ChangeNotifier {
   }
 
   Future<bool> nameAvailable(String id) {
+    if (id.isEmpty) {
+      return Future.value(true);
+    }
+
     return _firestore
         .collection("chats")
         .doc(id)
@@ -52,6 +56,9 @@ class ChatService extends ChangeNotifier {
   }
 
   Future<bool> createChannel(String id) async {
+    if (id.isEmpty) {
+      return Future.value(false);
+    }
     bool available = await nameAvailable(id);
     if (!available) {
       return false;
