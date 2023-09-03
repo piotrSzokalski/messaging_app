@@ -129,13 +129,13 @@ class ChatService extends ChangeNotifier {
     List<dynamic> members = data['members'];
     var currentUser = _firebaseAuth.currentUser?.email;
 
-    bool curentUserIsAMember = members.contains(currentUser);
+    bool currentUserIsAMember = members.contains(currentUser);
 
     if (saltedPasswordHash != storedPassword) {
       return false;
     }
 
-    if (!curentUserIsAMember) {
+    if (!currentUserIsAMember) {
       _firestore.collection("chats").doc(chatId).update({
         "members": FieldValue.arrayUnion([_firebaseAuth.currentUser?.email])
       });
@@ -143,6 +143,19 @@ class ChatService extends ChangeNotifier {
     }
 
     return true;
+  }
+
+  Future<void> addMember(String id) async {
+    var snapshot = await _firestore.collection("chats").doc(id).get();
+    var data = snapshot.data();
+    List<dynamic> members = data?['members'];
+    var currentUser = _firebaseAuth.currentUser?.email;
+    if (members.contains(currentUser)) {
+      return;
+    }
+    await _firestore.collection("chats").doc(id).update({
+      "members": FieldValue.arrayUnion([currentUser])
+    });
   }
 }
 

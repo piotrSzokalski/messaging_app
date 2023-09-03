@@ -54,6 +54,8 @@ class _Channels extends State {
       router.go("/unlock/$id");
       return;
     }
+    // ignore: use_build_context_synchronously
+    await Provider.of<ChatService>(context, listen: false).addMember(id);
     router.go("/channel/$id");
   }
 
