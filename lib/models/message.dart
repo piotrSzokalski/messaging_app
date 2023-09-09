@@ -7,11 +7,13 @@ class Message {
   Timestamp? timestamp;
   String? author;
   String? text;
-
-  Message({this.id, this.timestamp, this.author, this.text});
+  List<String>? images;
+  //String? images;
+  //String? field;
+  Message({this.id, this.timestamp, this.author, this.text, this.images});
 
   @override
   String toString() {
-    return 'Message{id: $id, timestamp: $timestamp, author: $author, text: $text}';
+    return 'Message{id: $id, timestamp: $timestamp, author: $author, text: $text, images: }';
   }
 }

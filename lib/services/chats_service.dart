@@ -1,16 +1,22 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
+import 'dart:core';
+import 'dart:collection';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 import 'package:messaging_app/models/message.dart';
 import 'package:crypt/crypt.dart';
 
 class ChatService extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
 
   Stream<List<String>> getChats() {
     return _firestore
@@ -20,33 +26,76 @@ class ChatService extends ChangeNotifier {
         .map((snapshot) => snapshot.docs.map((doc) => doc.id).toList());
   }
 
-  Stream<List<Message>> getMessages(String id) {
+  Stream<List<Message>>? getMessages(String id) {
     return _firestore
         .collection("chats")
         .doc(id)
         .collection("messages")
         .orderBy("timestamp")
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) {
-              var x = Message(
-                  id: doc.id,
-                  timestamp: doc.data()['timestamp'],
-                  author: doc.data()['author'],
-                  text: doc.data()['text']);
-              return x;
-            }).toList());
+        .map((snapshot) {
+      {
+        return snapshot.docs.map((doc) {
+          var links = doc.data()['images'];
+          List<String> imageList = [];
+          for (var link in links) {
+            imageList.add(link.toString());
+          }
+          print(imageList.runtimeType);
+          return Message(
+              id: doc.id,
+              timestamp: doc.data()['timestamp'],
+              author: doc.data()['author'],
+              //text: doc.data()['text'],
+              images: imageList);
+        }).toList();
+      }
+    });
   }
 
-  void sendMessage(
-      {String? chatId, required String author, required String text}) {
+  Future<void> sendMessage(
+      {String? chatId,
+      required String author,
+      required String text,
+      List<XFile>? images}) async {
     if (chatId == null) {
       return;
     }
+
+    List<String> imageUrls = [];
+
+    if (images != null && images.isNotEmpty) {
+      var rootDir = _storage.ref();
+      var imagesDir = rootDir.child("images");
+      for (XFile image in images) {
+        String fileName = DateTime.now().millisecondsSinceEpoch.toString();
+        Reference imageReference = imagesDir.child(fileName);
+        try {
+          await imageReference.putFile(File(image.path));
+          var url = await imageReference.getDownloadURL();
+          imageUrls.add(url);
+        } catch (error) {
+          print("____________________");
+          print(error);
+        }
+      }
+    }
+
+    Map<String, dynamic> dataToSend = {
+      'author': author,
+      'text': text,
+      'timestamp': Timestamp.now()
+    };
+
+    if (imageUrls.isNotEmpty) {
+      dataToSend['images'] = imageUrls;
+    }
+
     _firestore
         .collection("chats")
         .doc(chatId)
         .collection("messages")
-        .add({'author': author, 'text': text, 'timestamp': Timestamp.now()});
+        .add(dataToSend);
   }
 
   Future<bool> nameAvailable(String id) {
@@ -82,8 +131,8 @@ class ChatService extends ChangeNotifier {
 
     if (password == null || password!.isEmpty) {
       await _firestore.collection("chats").doc(id).set({
-        'owner': _firebaseAuth.currentUser?.email,
-        'members': [_firebaseAuth.currentUser?.email]
+        'owner': _auth.currentUser?.email,
+        'members': [_auth.currentUser?.email]
       });
       return true;
     }
@@ -92,8 +141,8 @@ class ChatService extends ChangeNotifier {
     String saltedPasswordHash = Crypt.sha256(password, salt: salt).toString();
 
     await _firestore.collection("chats").doc(id).set({
-      'owner': _firebaseAuth.currentUser?.email,
-      'members': [_firebaseAuth.currentUser?.email],
+      'owner': _auth.currentUser?.email,
+      'members': [_auth.currentUser?.email],
       'passwordSecured': true,
       'password': saltedPasswordHash,
       'salt': salt
@@ -111,7 +160,7 @@ class ChatService extends ChangeNotifier {
     var snapshot = await _firestore.collection("chats").doc(id).get();
     var data = snapshot.data();
     List<dynamic> members = data?['members'];
-    var currentUser = _firebaseAuth.currentUser?.email;
+    var currentUser = _auth.currentUser?.email;
     return (data!.containsKey("passwordSecured") &&
             !members.contains(currentUser))
         ? true
@@ -127,7 +176,7 @@ class ChatService extends ChangeNotifier {
     String saltedPasswordHash = Crypt.sha256(password, salt: salt).toString();
 
     List<dynamic> members = data['members'];
-    var currentUser = _firebaseAuth.currentUser?.email;
+    var currentUser = _auth.currentUser?.email;
 
     bool currentUserIsAMember = members.contains(currentUser);
 
@@ -137,7 +186,7 @@ class ChatService extends ChangeNotifier {
 
     if (!currentUserIsAMember) {
       _firestore.collection("chats").doc(chatId).update({
-        "members": FieldValue.arrayUnion([_firebaseAuth.currentUser?.email])
+        "members": FieldValue.arrayUnion([_auth.currentUser?.email])
       });
       ;
     }
@@ -149,7 +198,7 @@ class ChatService extends ChangeNotifier {
     var snapshot = await _firestore.collection("chats").doc(id).get();
     var data = snapshot.data();
     List<dynamic> members = data?['members'];
-    var currentUser = _firebaseAuth.currentUser?.email;
+    var currentUser = _auth.currentUser?.email;
     if (members.contains(currentUser)) {
       return;
     }

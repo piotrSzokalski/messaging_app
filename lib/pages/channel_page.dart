@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:messaging_app/models/message.dart';
 import 'package:messaging_app/services/chats_service.dart';
 import 'package:messaging_app/services/user_service.dart';
@@ -16,6 +19,8 @@ class ChannelPage extends StatefulWidget {
 class _ChannelPage extends State<ChannelPage> {
   String? _id;
 
+  List<XFile> _imagesToSend = [];
+
   _ChannelPage(this._id);
 
   TextEditingController _inputController = TextEditingController();
@@ -27,7 +32,21 @@ class _ChannelPage extends State<ChannelPage> {
 
     if (username != null) {
       Provider.of<ChatService>(context, listen: false).sendMessage(
-          chatId: _id, author: username, text: _inputController.text);
+          chatId: _id,
+          author: username,
+          text: _inputController.text,
+          images: _imagesToSend);
+    }
+  }
+
+  void _addImage(ImageSource imageSource) async {
+    ImagePicker imagePicker = ImagePicker();
+    XFile? imageFile = await imagePicker.pickImage(source: imageSource);
+    if (imageFile != null) {
+      setState(() {
+        _imagesToSend.add(imageFile);
+        print(_imagesToSend);
+      });
     }
   }
 
@@ -76,26 +95,67 @@ class _ChannelPage extends State<ChannelPage> {
               width: 15,
             ),
             Expanded(
-              child: TextField(
-                decoration: InputDecoration(
-                    hintText: "Write message...",
-                    hintStyle: TextStyle(color: Colors.black54),
-                    border: InputBorder.none),
-                controller: _inputController,
+              child: Container(
+                height: 300,
+                child: SizedBox(
+                  height: 200,
+                  width: 200,
+                  child: TextField(
+                    style: const TextStyle(
+                        height: 1.5, // change this to reflect the effect
+                        fontSize: 20.0),
+                    decoration: InputDecoration(
+                        prefix: _imagesToSend.isNotEmpty
+                            ? ListView.builder(
+                                itemCount: _imagesToSend.length,
+                                itemBuilder: (context, index) {
+                                  return Container(
+                                      width: 100,
+                                      height: 100,
+                                      child: Stack(
+                                        children: [
+                                          Image.file(
+                                              File(_imagesToSend[index].path),
+                                              height: 100,
+                                              width: 100,
+                                              fit: BoxFit.cover),
+                                          Positioned(
+                                              top: 0,
+                                              right: 0,
+                                              child: IconButton(
+                                                icon: Icon(Icons.close),
+                                                onPressed: () {},
+                                              ))
+                                        ],
+                                      ));
+                                })
+                            : const Text(" "),
+                        hintText: "Write message...",
+                        hintStyle: TextStyle(color: Colors.black54),
+                        border: InputBorder.none),
+                    controller: _inputController,
+                  ),
+                ),
               ),
             ),
+            IconButton(
+                icon: const Icon(Icons.image),
+                onPressed: () => _addImage(ImageSource.gallery)),
+            IconButton(
+                icon: const Icon(Icons.camera_alt),
+                onPressed: () => _addImage(ImageSource.camera)),
             const SizedBox(
               width: 15,
             ),
             FloatingActionButton(
               onPressed: _sendMessage,
+              backgroundColor: Colors.blue,
+              elevation: 0,
               child: const Icon(
                 Icons.send,
                 color: Colors.white,
                 size: 18,
               ),
-              backgroundColor: Colors.blue,
-              elevation: 0,
             ),
           ],
         ),
@@ -108,7 +168,13 @@ class _ChannelPage extends State<ChannelPage> {
       stream: Provider.of<ChatService>(context).getMessages(_id!),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const CircularProgressIndicator();
+          return Column(
+            children: [
+              const Text(
+                  'snapshot.connectionState == ConnectionState.waiting\n\n'),
+              Text(snapshot.toString())
+            ],
+          );
         } else if (snapshot.hasError) {
           return Text("Error: ${snapshot.error}");
         } else if (snapshot.hasData) {
@@ -153,6 +219,14 @@ class _ChannelPage extends State<ChannelPage> {
                         child: Text(message.text ?? "E"),
                       ),
                     ),
+                    // if (message.images != null)
+                    //   ListView.builder(
+                    //       itemCount: message.images?.length,
+                    //       itemBuilder: (context, index) {
+                    //         return const Text("Ther should be image here");
+                    //       })
+                    // else
+                    //   const Text("No i,ages")
                   ]),
                 ),
               );
