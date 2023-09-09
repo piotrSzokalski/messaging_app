@@ -7,10 +7,11 @@ class Message {
   Timestamp? timestamp;
   String? author;
   String? text;
-  List<String>? images;
+  List<String> images;
   //String? images;
   //String? field;
-  Message({this.id, this.timestamp, this.author, this.text, this.images});
+  Message(
+      {this.id, this.timestamp, this.author, this.text, required this.images});
 
   @override
   String toString() {

@@ -36,18 +36,12 @@ class ChatService extends ChangeNotifier {
         .map((snapshot) {
       {
         return snapshot.docs.map((doc) {
-          var links = doc.data()['images'];
-          List<String> imageList = [];
-          for (var link in links) {
-            imageList.add(link.toString());
-          }
-          print(imageList.runtimeType);
           return Message(
               id: doc.id,
               timestamp: doc.data()['timestamp'],
               author: doc.data()['author'],
-              //text: doc.data()['text'],
-              images: imageList);
+              text: doc.data()['text'],
+              images: List<String>.from(doc.data()['images'] as List));
         }).toList();
       }
     });
@@ -89,6 +83,8 @@ class ChatService extends ChangeNotifier {
 
     if (imageUrls.isNotEmpty) {
       dataToSend['images'] = imageUrls;
+    } else {
+      dataToSend['images'] = (List<String>.from([]));
     }
 
     _firestore
