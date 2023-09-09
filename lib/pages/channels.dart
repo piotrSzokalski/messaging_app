@@ -1,8 +1,10 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:messaging_app/models/message.dart';
 import 'package:messaging_app/services/chats_service.dart';
 import 'package:messaging_app/services/user_service.dart';
 import 'package:provider/provider.dart';
@@ -54,6 +56,8 @@ class _Channels extends State {
       router.go("/unlock/$id");
       return;
     }
+    // ignore: use_build_context_synchronously
+    await Provider.of<ChatService>(context, listen: false).addMember(id);
     router.go("/channel/$id");
   }
 
@@ -151,6 +155,13 @@ class _Channels extends State {
 
   @override
   Widget build(BuildContext context) {
+    //   String? id;
+    // Timestamp? timestamp;
+    // String? author;
+    // String? text;
+    // List<String>? images;
+
+    // // //
     _newChannelNameController.addListener(() {
       print("TEST");
     });
