@@ -219,14 +219,8 @@ class _ChannelPage extends State<ChannelPage> {
                         child: Text(message.text ?? "E"),
                       ),
                     ),
-                    // if (message.images != null)
-                    //   ListView.builder(
-                    //       itemCount: message.images?.length,
-                    //       itemBuilder: (context, index) {
-                    //         return const Text("Ther should be image here");
-                    //       })
-                    // else
-                    //   const Text("No i,ages")
+                    if (message.images != [])
+                      for (var image in message.images) Image.network(image)
                   ]),
                 ),
               );
