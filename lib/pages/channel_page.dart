@@ -31,12 +31,17 @@ class _ChannelPage extends State<ChannelPage> {
         .first;
 
     if (username != null) {
-      Provider.of<ChatService>(context, listen: false).sendMessage(
+      await Provider.of<ChatService>(context, listen: false).sendMessage(
           chatId: _id,
           author: username,
           text: _inputController.text,
           images: _imagesToSend);
     }
+
+    setState(() {
+      _inputController.clear();
+      _imagesToSend.clear();
+    });
   }
 
   void _addImage(ImageSource imageSource) async {
@@ -48,6 +53,17 @@ class _ChannelPage extends State<ChannelPage> {
         print(_imagesToSend);
       });
     }
+  }
+
+  void _removeImage(int index) {
+    if (index < 0) {
+      return;
+    }
+
+    setState(() {
+      print("removeing image at index:$index");
+      _imagesToSend.removeAt(index);
+    });
   }
 
   @override
@@ -70,7 +86,7 @@ class _ChannelPage extends State<ChannelPage> {
       alignment: Alignment.bottomLeft,
       child: Container(
         padding: const EdgeInsets.only(left: 10, bottom: 10, top: 10),
-        height: 60,
+        height: _imagesToSend.isEmpty ? 60 : 200,
         width: double.infinity,
         color: Colors.white,
         child: Row(
@@ -109,7 +125,7 @@ class _ChannelPage extends State<ChannelPage> {
                             ? ListView.builder(
                                 itemCount: _imagesToSend.length,
                                 itemBuilder: (context, index) {
-                                  return Container(
+                                  return SizedBox(
                                       width: 100,
                                       height: 100,
                                       child: Stack(
@@ -124,7 +140,8 @@ class _ChannelPage extends State<ChannelPage> {
                                               right: 0,
                                               child: IconButton(
                                                 icon: Icon(Icons.close),
-                                                onPressed: () {},
+                                                onPressed: () =>
+                                                    _removeImage(index),
                                               ))
                                         ],
                                       ));
