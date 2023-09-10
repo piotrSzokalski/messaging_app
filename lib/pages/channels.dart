@@ -155,16 +155,6 @@ class _Channels extends State {
 
   @override
   Widget build(BuildContext context) {
-    //   String? id;
-    // Timestamp? timestamp;
-    // String? author;
-    // String? text;
-    // List<String>? images;
-
-    // // //
-    _newChannelNameController.addListener(() {
-      print("TEST");
-    });
     return Scaffold(
         appBar: AppBar(
           leading: Icon(Icons.account_circle_rounded),

@@ -39,10 +39,55 @@ class _Login extends State<Login> {
     }
   }
 
+  _openPasswordRester(BuildContext context) {
+    showDialog(
+        context: context,
+        builder: (builder) {
+          return StatefulBuilder(builder: (context, setStateInDialog) {
+            return AlertDialog(
+              title: const Text("Password rest"),
+              content: Column(mainAxisSize: MainAxisSize.min, children: [
+                if (_emailController.text.isNotEmpty)
+                  Text(
+                      "We will send password reset email to: ${_emailController.text}")
+                else
+                  Column(children: [
+                    const Text('Enter your email here'),
+                    TextField(
+                      controller: _emailController,
+                    ),
+                  ]),
+              ]),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text("cancel")),
+                ElevatedButton(
+                    onPressed: () async {
+                      try {
+                        await Provider.of<AuthService>(context, listen: false)
+                            .resetPassword(_emailController.text);
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                            content: Text(
+                                "Password reset link was sent to your email")));
+                      } catch (e) {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: Text("Couldn't send reset link $e")));
+                      }
+                    },
+                    child: Text('Rest'))
+              ],
+            );
+          });
+        });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(router.routeInformationParser.toString())),
+      appBar: AppBar(title: const Text("Login")),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -93,15 +138,19 @@ class _Login extends State<Login> {
                       onPressed: _login,
                       child: const Text('Login'),
                     ),
-                    const Center(
+                    Center(
                       child: Padding(
                         padding: EdgeInsets.all(16.0),
-                        child: Text(
-                          "Forgot your password?",
-                          style: TextStyle(
-                            color: Colors.blue, // Change color to mimic a link
-                            decoration:
-                                TextDecoration.underline, // Add underline
+                        child: GestureDetector(
+                          onTap: () => _openPasswordRester(context),
+                          child: const Text(
+                            "Forgot your password?",
+                            style: TextStyle(
+                              color:
+                                  Colors.blue, // Change color to mimic a link
+                              decoration:
+                                  TextDecoration.underline, // Add underline
+                            ),
                           ),
                         ),
                       ),
