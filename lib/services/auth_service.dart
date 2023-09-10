@@ -35,6 +35,14 @@ class AuthService extends ChangeNotifier {
     }
   }
 
+  Future<void> resetPassword(String email) {
+    try {
+      return _firebaseAuth.sendPasswordResetEmail(email: email);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<void> logout() async {
     try {
       await _firebaseAuth.signOut();
