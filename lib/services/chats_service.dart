@@ -18,12 +18,12 @@ class ChatService extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
-  Stream<List<String>> getChats() {
-    return _firestore
-        .collection("chats")
-        .limit(100)
-        .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => doc.id).toList());
+  Stream<List<String>> getChats(String query) {
+    return _firestore.collection("chats").limit(100).snapshots().map(
+        (snapshot) => snapshot.docs
+            .map((doc) => doc.id)
+            .where((id) => id.contains(query))
+            .toList());
   }
 
   Stream<List<Message>>? getMessages(String id) {

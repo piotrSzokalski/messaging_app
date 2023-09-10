@@ -32,6 +32,8 @@ class _Channels extends State {
 
   final _channelPasswordController = TextEditingController();
 
+  final _searchQueryController = TextEditingController();
+
   bool newChannelNameValid = false;
 
   ChatService chatService = new ChatService();
@@ -166,6 +168,7 @@ class _Channels extends State {
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: TextField(
+                controller: _searchQueryController,
                 onChanged: _updateSearchQuery,
                 decoration: const InputDecoration(
                   labelText: 'Search',
@@ -215,7 +218,8 @@ class _Channels extends State {
   Expanded buildChatList() {
     return Expanded(
       child: StreamBuilder(
-          stream: Provider.of<ChatService>(context).getChats(),
+          stream: Provider.of<ChatService>(context)
+              .getChats(_searchQueryController.text),
           builder: (
             context,
             snapshot,
