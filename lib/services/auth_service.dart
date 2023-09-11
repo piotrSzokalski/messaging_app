@@ -19,6 +19,28 @@ class AuthService extends ChangeNotifier {
     }
   }
 
+  Future<UserCredential> singInWithUsernameAndPassword(
+      String username, String password) async {
+    String email = "";
+    try {
+      var x = await _firestore
+          .collection("users")
+          .where("username", isEqualTo: username)
+          .limit(1)
+          .get();
+      String email = x.docs[0]["email"] ?? "";
+    } catch (e) {
+      throw Exception("No such user");
+    }
+    try {
+      UserCredential userCredential = await _firebaseAuth
+          .signInWithEmailAndPassword(email: email, password: password);
+      return userCredential;
+    } on FirebaseAuthException catch (exception) {
+      throw exception;
+    }
+  }
+
   Future<UserCredential> register(
       String username, String email, String password) async {
     try {

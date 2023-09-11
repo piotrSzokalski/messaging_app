@@ -31,12 +31,25 @@ class _Login extends State<Login> {
     });
 
     try {
-      await authService.singInWithEmailAndPassword(
-          _emailController.text, _passwordController.text);
+      if (_isEmailValid(_emailController.text)) {
+        await authService.singInWithEmailAndPassword(
+            _emailController.text, _passwordController.text);
+      } else {
+        await authService.singInWithUsernameAndPassword(
+            _emailController.text, _passwordController.text);
+      }
     } catch (e) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(e.toString())));
     }
+  }
+
+  bool _isEmailValid(String email) {
+    final emailRegExp = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    );
+
+    return emailRegExp.hasMatch(email);
   }
 
   _openPasswordRester(BuildContext context) {
