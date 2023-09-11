@@ -59,9 +59,7 @@ class _ChannelPage extends State<ChannelPage> {
     if (index < 0) {
       return;
     }
-
     setState(() {
-      print("removeing image at index:$index");
       _imagesToSend.removeAt(index);
     });
   }
@@ -237,7 +235,18 @@ class _ChannelPage extends State<ChannelPage> {
                       ),
                     ),
                     if (message.images != [])
-                      for (var image in message.images) Image.network(image)
+                      for (var image in message.images)
+                        FutureBuilder(
+                            future: precacheImage(NetworkImage(image), context),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting)
+                                return CircularProgressIndicator();
+                              else if (snapshot.hasError)
+                                return Text('Error loading image');
+                              else
+                                return Image.network(image);
+                            })
                   ]),
                 ),
               );
