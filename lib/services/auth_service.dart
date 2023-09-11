@@ -23,12 +23,12 @@ class AuthService extends ChangeNotifier {
       String username, String password) async {
     String email = "";
     try {
-      var x = await _firestore
+      var snapshot = await _firestore
           .collection("users")
           .where("username", isEqualTo: username)
           .limit(1)
           .get();
-      String email = x.docs[0]["email"] ?? "";
+      email = snapshot.docs[0]["email"];
     } catch (e) {
       throw Exception("No such user");
     }
