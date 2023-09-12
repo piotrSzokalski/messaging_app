@@ -16,4 +16,17 @@ class UserService extends ChangeNotifier {
         .snapshots()
         .map((snapshot) => snapshot.data()?["username"] as String);
   }
+
+  Future<String> getUserEmail(String username) async {
+    try {
+      var snapshot = await _firestore
+          .collection("user")
+          .where("username", isEqualTo: username)
+          .limit(1)
+          .get();
+      return snapshot.docs[0]['email'];
+    } catch (e) {
+      throw Exception("No such user");
+    }
+  }
 }

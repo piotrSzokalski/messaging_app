@@ -13,7 +13,7 @@ class Login extends StatefulWidget {
 
 class _Login extends State<Login> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  TextEditingController _emailController = TextEditingController();
+  TextEditingController _emailOrUsernameController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
 
   bool _passwordObscured = true;
@@ -22,7 +22,7 @@ class _Login extends State<Login> {
     if (!_formKey.currentState!.validate()) {
       return;
     }
-    print("Email: ${_emailController.text}");
+    print("Email: ${_emailOrUsernameController.text}");
     print("Password: ${_passwordController.text}");
     final authService = Provider.of<AuthService>(context, listen: false);
 
@@ -31,12 +31,12 @@ class _Login extends State<Login> {
     });
 
     try {
-      if (_isEmailValid(_emailController.text)) {
+      if (_isEmailValid(_emailOrUsernameController.text)) {
         await authService.singInWithEmailAndPassword(
-            _emailController.text, _passwordController.text);
+            _emailOrUsernameController.text, _passwordController.text);
       } else {
         await authService.singInWithUsernameAndPassword(
-            _emailController.text, _passwordController.text);
+            _emailOrUsernameController.text, _passwordController.text);
       }
     } catch (e) {
       ScaffoldMessenger.of(context)
@@ -48,7 +48,6 @@ class _Login extends State<Login> {
     final emailRegExp = RegExp(
       r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
     );
-
     return emailRegExp.hasMatch(email);
   }
 
@@ -60,14 +59,15 @@ class _Login extends State<Login> {
             return AlertDialog(
               title: const Text("Password rest"),
               content: Column(mainAxisSize: MainAxisSize.min, children: [
-                if (_emailController.text.isNotEmpty)
+                if (_emailOrUsernameController.text.isNotEmpty &&
+                    _isEmailValid(_emailOrUsernameController.text))
                   Text(
-                      "We will send password reset email to: ${_emailController.text}")
+                      "We will send password reset email to: ${_emailOrUsernameController.text}")
                 else
                   Column(children: [
                     const Text('Enter your email here'),
                     TextField(
-                      controller: _emailController,
+                      controller: _emailOrUsernameController,
                     ),
                   ]),
               ]),
@@ -79,7 +79,7 @@ class _Login extends State<Login> {
                     onPressed: () async {
                       try {
                         await Provider.of<AuthService>(context, listen: false)
-                            .resetPassword(_emailController.text);
+                            .resetPassword(_emailOrUsernameController.text);
                         Navigator.pop(context);
                         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                             content: Text(
@@ -113,7 +113,7 @@ class _Login extends State<Login> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
                     TextFormField(
-                      controller: _emailController,
+                      controller: _emailOrUsernameController,
                       keyboardType: TextInputType.emailAddress,
                       decoration:
                           const InputDecoration(labelText: 'Username or Email'),
