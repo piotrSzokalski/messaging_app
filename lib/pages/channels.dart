@@ -252,7 +252,10 @@ class _Channels extends State {
                       ),
                       trailing: Visibility(
                           visible: chatsList[index]['locked'] == true,
-                          child: Icon(visited ? Icons.lock_open : Icons.lock)),
+                          child: Icon((visited ||
+                                  chatsList[index]['owner'] == user?.email)
+                              ? Icons.lock_open
+                              : Icons.lock)),
                       onTap: () =>
                           _openChannel(chatsList[index]['id'].toString()),
                     );

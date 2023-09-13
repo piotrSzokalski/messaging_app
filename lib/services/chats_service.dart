@@ -27,6 +27,7 @@ class ChatService extends ChangeNotifier {
           return {
             'id': doc.id,
             'locked': isPasswordProtected,
+            'owner': doc.data()['owner']
           };
         })
         .where((map) =>
