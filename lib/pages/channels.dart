@@ -38,6 +38,8 @@ class _Channels extends State {
 
   ChatService chatService = new ChatService();
 
+  //List<String> visited = [];
+
   Future<void> _logout() async {
     final authService = Provider.of<AuthService>(context, listen: false);
     final chatService = Provider.of<ChatService>(context, listen: false);
@@ -157,31 +159,40 @@ class _Channels extends State {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          leading: Icon(Icons.account_circle_rounded),
-          title: Text("channels"),
-        ),
-        drawer: buildDrawer(),
-        body: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: TextField(
-                controller: _searchQueryController,
-                onChanged: _updateSearchQuery,
-                decoration: const InputDecoration(
-                  labelText: 'Search',
-                  prefixIcon: Icon(Icons.search),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(25.0)),
+    return FutureBuilder(
+      future:
+          Provider.of<UserService>(context, listen: false).getVisitedChannels(),
+      builder: (context, snapshot) {
+        final visitedChannels = snapshot.data;
+        print(visitedChannels);
+        return Scaffold(
+            appBar: AppBar(
+              leading: Icon(Icons.account_circle_rounded),
+              title: Text("channels"),
+            ),
+            drawer: buildDrawer(),
+            body: Column(
+              children: [
+                //Text(visied.toString()),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextField(
+                    controller: _searchQueryController,
+                    onChanged: _updateSearchQuery,
+                    decoration: const InputDecoration(
+                      labelText: 'Search',
+                      prefixIcon: Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(25.0)),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-            buildChatList()
-          ],
-        ));
+                buildChatList(visitedChannels)
+              ],
+            ));
+      },
+    );
   }
 
   Drawer buildDrawer() {
@@ -215,7 +226,7 @@ class _Channels extends State {
     );
   }
 
-  Expanded buildChatList() {
+  Expanded buildChatList(dynamic visitedChannels) {
     return Expanded(
       child: StreamBuilder(
           stream: Provider.of<ChatService>(context)
@@ -227,13 +238,25 @@ class _Channels extends State {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return CircularProgressIndicator();
             } else if (snapshot.hasData) {
-              final chatsList = snapshot.data as List<String>;
+              final chatsList = snapshot.data as List<Map<String, dynamic>>;
               return ListView.builder(
                   itemCount: chatsList.length,
-                  itemBuilder: (context, index) => ListTile(
-                        title: Text(chatsList[index].toString()),
-                        onTap: () => _openChannel(chatsList[index].toString()),
-                      ));
+                  itemBuilder: (context, index) {
+                    bool visited = (visitedChannels as List<String>)
+                        .contains(chatsList[index]['id']);
+                    return ListTile(
+                      title: Text(
+                        chatsList[index]['id'].toString(),
+                        style: TextStyle(
+                            color: visited ? Colors.blue : Colors.black),
+                      ),
+                      trailing: Visibility(
+                          visible: chatsList[index]['locked'] == true,
+                          child: Icon(visited ? Icons.lock_open : Icons.lock)),
+                      onTap: () =>
+                          _openChannel(chatsList[index]['id'].toString()),
+                    );
+                  });
             } else {
               return const Text('no data');
             }

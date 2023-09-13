@@ -65,6 +65,12 @@ class _ChannelPage extends State<ChannelPage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    Provider.of<UserService>(context, listen: false).addChannelTotVisited(_id!);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
