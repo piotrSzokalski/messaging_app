@@ -49,6 +49,9 @@ class UserService extends ChangeNotifier {
 
   Future<List<String>> getVisitedChannels() async {
     String? uid = _firebaseAuth.currentUser?.uid;
+    if (uid == null) {
+      return [];
+    }
 
     var snapshot = await _firestore.collection("users").doc(uid).get();
     var data = snapshot.data();
