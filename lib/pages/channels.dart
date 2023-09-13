@@ -229,41 +229,61 @@ class _Channels extends State {
   Expanded buildChatList(dynamic visitedChannels) {
     return Expanded(
       child: StreamBuilder(
-          stream: Provider.of<ChatService>(context)
-              .getChats(_searchQueryController.text),
-          builder: (
-            context,
-            snapshot,
-          ) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return CircularProgressIndicator();
-            } else if (snapshot.hasData) {
-              final chatsList = snapshot.data as List<Map<String, dynamic>>;
-              return ListView.builder(
-                  itemCount: chatsList.length,
-                  itemBuilder: (context, index) {
-                    bool visited = (visitedChannels as List<String>)
-                        .contains(chatsList[index]['id']);
-                    return ListTile(
-                      title: Text(
-                        chatsList[index]['id'].toString(),
-                        style: TextStyle(
-                            color: visited ? Colors.blue : Colors.black),
-                      ),
-                      trailing: Visibility(
-                          visible: chatsList[index]['locked'] == true,
-                          child: Icon((visited ||
-                                  chatsList[index]['owner'] == user?.email)
-                              ? Icons.lock_open
-                              : Icons.lock)),
-                      onTap: () =>
-                          _openChannel(chatsList[index]['id'].toString()),
-                    );
-                  });
-            } else {
-              return const Text('no data');
-            }
-          }),
+        stream: Provider.of<ChatService>(context)
+            .getChats(_searchQueryController.text),
+        builder: (
+          context,
+          snapshot,
+        ) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return CircularProgressIndicator();
+          } else if (snapshot.hasData) {
+            final chatsList = snapshot.data as List<Map<String, dynamic>>;
+
+            chatsList.sort((a, b) {
+              final visitedA =
+                  (visitedChannels as List<String>).contains(a['id']);
+              final visitedB =
+                  (visitedChannels as List<String>).contains(b['id']);
+
+              if (visitedA && !visitedB) {
+                return -1;
+              } else if (!visitedA && visitedB) {
+                return 1;
+              }
+
+              return 0;
+            });
+
+            return ListView.builder(
+              itemCount: chatsList.length,
+              itemBuilder: (context, index) {
+                bool visited = (visitedChannels as List<String>)
+                    .contains(chatsList[index]['id']);
+                return ListTile(
+                  title: Text(
+                    chatsList[index]['id'].toString(),
+                    style: TextStyle(
+                      color: visited ? Colors.blue : Colors.black,
+                    ),
+                  ),
+                  trailing: Visibility(
+                    visible: chatsList[index]['locked'] == true,
+                    child: Icon(
+                      (visited || chatsList[index]['owner'] == user?.email)
+                          ? Icons.lock_open
+                          : Icons.lock,
+                    ),
+                  ),
+                  onTap: () => _openChannel(chatsList[index]['id'].toString()),
+                );
+              },
+            );
+          } else {
+            return const Text('no data');
+          }
+        },
+      ),
     );
   }
 }
