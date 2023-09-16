@@ -18,21 +18,19 @@ class ChatService extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
-  Stream<List<Map<String, dynamic>>> getChats(String query) {
-    return _firestore.collection("chats").snapshots().map((snapshot) => snapshot
-        .docs
-        .map((doc) {
-          final bool isPasswordProtected =
-              doc.data().containsKey('passwordSecured');
-          return {
-            'id': doc.id,
-            'locked': isPasswordProtected,
-            'owner': doc.data()['owner']
-          };
-        })
-        .where((map) =>
-            (map['id'] as String).toLowerCase().contains(query.toLowerCase()))
-        .toList());
+  Stream<List<Map<String, dynamic>>> getChats() {
+    return _firestore
+        .collection("chats")
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) {
+              final bool isPasswordProtected =
+                  doc.data().containsKey('passwordSecured');
+              return {
+                'id': doc.id,
+                'locked': isPasswordProtected,
+                'owner': doc.data()['owner']
+              };
+            }).toList());
   }
 
   Stream<List<Message>>? getMessages(String id) {

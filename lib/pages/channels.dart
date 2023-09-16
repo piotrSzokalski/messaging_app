@@ -229,16 +229,21 @@ class _Channels extends State {
   Expanded buildChatList(dynamic visitedChannels) {
     return Expanded(
       child: StreamBuilder(
-        stream: Provider.of<ChatService>(context)
-            .getChats(_searchQueryController.text),
+        stream: Provider.of<ChatService>(context).getChats(),
         builder: (
           context,
           snapshot,
         ) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return CircularProgressIndicator();
+            return const CircularProgressIndicator();
           } else if (snapshot.hasData) {
-            final chatsList = snapshot.data as List<Map<String, dynamic>>;
+            var chatsList = snapshot.data as List<Map<String, dynamic>>;
+
+            chatsList = chatsList
+                .where((element) => (element['id'] as String)
+                    .toLowerCase()
+                    .contains(_searchQueryController.text.toLowerCase()))
+                .toList();
 
             chatsList.sort((a, b) {
               final visitedA =
