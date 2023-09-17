@@ -117,8 +117,6 @@ class _ChannelPage extends State<ChannelPage> {
     if (_scrollController.offset >=
             _scrollController.position.maxScrollExtent &&
         !_scrollController.position.outOfRange) {
-      print("HERE");
-      //return;
       Provider.of<ChatService>(context, listen: false)
           .getMessages(_id!, _oldestMessageTimeStamp)
           .then((messages) => _messagesList.addAll(messages))
@@ -136,8 +134,6 @@ class _ChannelPage extends State<ChannelPage> {
     super.initState();
     Provider.of<UserService>(context, listen: false).addChannelTotVisited(_id!);
     _scrollController.addListener(_onScroll);
-
-    //////
 
     _messagesStreamController.add(_messagesList);
     Provider.of<ChatService>(context, listen: false)
@@ -200,8 +196,8 @@ class _ChannelPage extends State<ChannelPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             if (_imagesToSend.isNotEmpty)
-              Container(
-                height: 200, // Set a maximum height for the input area
+              SizedBox(
+                height: 200,
                 child: buildInputImagesPreview(),
               ),
             Row(
@@ -226,20 +222,17 @@ class _ChannelPage extends State<ChannelPage> {
                   width: 15,
                 ),
                 Expanded(
-                  child: Container(
-                    child: TextField(
-                      style: const TextStyle(
-                        fontSize: 20.0,
-                      ),
-                      maxLines:
-                          null, // Allows the text field to grow vertically
-                      decoration: InputDecoration(
-                        hintText: "Write message...",
-                        hintStyle: const TextStyle(color: Colors.black54),
-                        border: InputBorder.none,
-                      ),
-                      controller: _inputController,
+                  child: TextField(
+                    style: const TextStyle(
+                      fontSize: 20.0,
                     ),
+                    maxLines: null, // Allows the text field to grow vertically
+                    decoration: const InputDecoration(
+                      hintText: "Write message...",
+                      hintStyle: TextStyle(color: Colors.black54),
+                      border: InputBorder.none,
+                    ),
+                    controller: _inputController,
                   ),
                 ),
                 IconButton(
@@ -273,6 +266,7 @@ class _ChannelPage extends State<ChannelPage> {
 
   ListView buildInputImagesPreview() {
     return ListView.builder(
+        scrollDirection: Axis.horizontal,
         itemCount: _imagesToSend.length,
         itemBuilder: (context, index) {
           return SizedBox(
@@ -286,7 +280,7 @@ class _ChannelPage extends State<ChannelPage> {
                       top: 0,
                       right: 0,
                       child: IconButton(
-                        icon: Icon(Icons.close),
+                        icon: const Icon(Icons.close),
                         onPressed: () => _removeImage(index),
                       ))
                 ],
@@ -296,8 +290,7 @@ class _ChannelPage extends State<ChannelPage> {
 
   StreamBuilder<List<Message>> buildMessages(BuildContext context) {
     return StreamBuilder(
-      stream: _messagesStreamController
-          .stream, //Provider.of<ChatService>(context).getMessagesStream(_id!, _limit),
+      stream: _messagesStreamController.stream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Column(
@@ -370,9 +363,10 @@ class _ChannelPage extends State<ChannelPage> {
                                     child: CircularProgressIndicator());
                               } else if (snapshot.hasError)
                                 return const Text('Error loading image');
-                              else
+                              else {
                                 return SizedBox(
                                     height: 200, child: Image.network(image));
+                              }
                             })
                   ]),
                 ),
