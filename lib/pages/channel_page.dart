@@ -14,24 +14,25 @@ class ChannelPage extends StatefulWidget {
   ChannelPage({super.key, this.id});
 
   @override
+  // ignore: no_logic_in_create_state
   State<ChannelPage> createState() => _ChannelPage(id);
 }
 
 class _ChannelPage extends State<ChannelPage> {
   String? _id;
 
-  List<XFile> _imagesToSend = [];
+  final List<XFile> _imagesToSend = [];
 
   _ChannelPage(this._id);
 
-  TextEditingController _inputController = TextEditingController();
+  final TextEditingController _inputController = TextEditingController();
 
-  ScrollController _scrollController = ScrollController();
+  final ScrollController _scrollController = ScrollController();
 
   final StreamController<List<Message>> _messagesStreamController =
       StreamController();
 
-  List<Message> _messagesList = [];
+  final List<Message> _messagesList = [];
 
   Timestamp _oldestMessageTimeStamp = Timestamp.now();
 
@@ -68,19 +69,18 @@ class _ChannelPage extends State<ChannelPage> {
 
     _showSendingDialog();
 
-    if (username != null) {
-      await Provider.of<ChatService>(context, listen: false).sendMessage(
-          chatId: _id,
-          author: username,
-          text: _inputController.text,
-          images: _imagesToSend);
-      _hideSendingDialog();
+    // ignore: use_build_context_synchronously
+    await Provider.of<ChatService>(context, listen: false).sendMessage(
+        chatId: _id,
+        author: username,
+        text: _inputController.text,
+        images: _imagesToSend);
+    _hideSendingDialog();
 
-      setState(() {
-        _inputController.clear();
-        _imagesToSend.clear();
-      });
-    }
+    setState(() {
+      _inputController.clear();
+      _imagesToSend.clear();
+    });
   }
 
   void _addImage(ImageSource imageSource) async {
@@ -89,7 +89,6 @@ class _ChannelPage extends State<ChannelPage> {
     if (imageFile != null) {
       setState(() {
         _imagesToSend.add(imageFile);
-        print(_imagesToSend);
       });
     }
   }
@@ -386,9 +385,9 @@ class _ChannelPage extends State<ChannelPage> {
                                 return const SizedBox(
                                     height: 200,
                                     child: CircularProgressIndicator());
-                              } else if (snapshot.hasError)
+                              } else if (snapshot.hasError) {
                                 return const Text('Error loading image');
-                              else {
+                              } else {
                                 return GestureDetector(
                                   onTap: () {
                                     _openImageViewer(Image.network(image));

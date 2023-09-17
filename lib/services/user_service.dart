@@ -13,8 +13,6 @@ class UserService extends ChangeNotifier {
     if (uid == null) {
       return Stream.empty();
     }
-    //print("UID");
-    //print(uid);
     return _firestore
         .collection("users")
         .doc(uid)

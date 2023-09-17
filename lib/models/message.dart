@@ -8,8 +8,6 @@ class Message {
   String? author;
   String? text;
   List<String> images;
-  //String? images;
-  //String? field;
   Message(
       {this.id, this.timestamp, this.author, this.text, required this.images});
 

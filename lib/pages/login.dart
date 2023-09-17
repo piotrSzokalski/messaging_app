@@ -13,8 +13,9 @@ class Login extends StatefulWidget {
 
 class _Login extends State<Login> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  TextEditingController _emailOrUsernameController = TextEditingController();
-  TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _emailOrUsernameController =
+      TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
 
   bool _passwordObscured = true;
 
@@ -80,6 +81,7 @@ class _Login extends State<Login> {
                       try {
                         await Provider.of<AuthService>(context, listen: false)
                             .resetPassword(_emailOrUsernameController.text);
+                        // ignore: use_build_context_synchronously
                         Navigator.pop(context);
                         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                             content: Text(
@@ -90,7 +92,7 @@ class _Login extends State<Login> {
                             content: Text("Couldn't send reset link $e")));
                       }
                     },
-                    child: Text('Rest'))
+                    child: const Text('Rest'))
               ],
             );
           });
@@ -153,7 +155,7 @@ class _Login extends State<Login> {
                     ),
                     Center(
                       child: Padding(
-                        padding: EdgeInsets.all(16.0),
+                        padding: const EdgeInsets.all(16.0),
                         child: GestureDetector(
                           onTap: () => _openPasswordRester(context),
                           child: const Text(
