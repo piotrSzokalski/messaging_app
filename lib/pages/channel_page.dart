@@ -28,22 +28,55 @@ class _ChannelPage extends State<ChannelPage> {
 
   ScrollController _scrollController = ScrollController();
 
-  int _limit = 10;
-
-  //////
-
-  StreamController<List<Message>> _messagesStreamController =
+  final StreamController<List<Message>> _messagesStreamController =
       StreamController();
 
   List<Message> _messagesList = [];
 
   Timestamp _oldestMessageTimeStamp = Timestamp.now();
-  //////
+
+  bool _isSending = false;
+
+  void _showSendingDialog() {
+    setState(() {
+      _isSending = true;
+    });
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return const Dialog(
+          child: Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Sending message...'),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _hideSendingDialog() {
+    setState(() {
+      _isSending = false;
+    });
+
+    Navigator.of(context, rootNavigator: true).pop();
+  }
 
   void _sendMessage() async {
     String? username = await Provider.of<UserService>(context, listen: false)
         .getUserName()
         .first;
+
+    _showSendingDialog();
 
     if (username != null) {
       await Provider.of<ChatService>(context, listen: false).sendMessage(
@@ -51,12 +84,13 @@ class _ChannelPage extends State<ChannelPage> {
           author: username,
           text: _inputController.text,
           images: _imagesToSend);
-    }
+      _hideSendingDialog();
 
-    setState(() {
-      _inputController.clear();
-      _imagesToSend.clear();
-    });
+      setState(() {
+        _inputController.clear();
+        _imagesToSend.clear();
+      });
+    }
   }
 
   void _addImage(ImageSource imageSource) async {
