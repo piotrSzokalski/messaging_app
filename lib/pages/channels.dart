@@ -38,15 +38,12 @@ class _Channels extends State {
 
   ChatService chatService = new ChatService();
 
-  //List<String> visited = [];
-
   Future<void> _logout() async {
     final authService = Provider.of<AuthService>(context, listen: false);
     final chatService = Provider.of<ChatService>(context, listen: false);
 
     authService.logout();
     FirebaseAuth.instance.idTokenChanges().listen((event) {
-      print("going to login");
       router.goNamed("home");
     });
     router.goNamed("home");
@@ -56,7 +53,6 @@ class _Channels extends State {
     bool protected = await Provider.of<ChatService>(context, listen: false)
         .isLockedForUser(id);
     if (protected) {
-      print(id);
       router.go("/unlock/$id");
       return;
     }
@@ -110,11 +106,11 @@ class _Channels extends State {
                   if (_errorMessage.isNotEmpty)
                     Text(
                       _errorMessage,
-                      style: TextStyle(color: Colors.red),
+                      style: const TextStyle(color: Colors.red),
                     ),
                   Row(
                     children: [
-                      Text("Secure with password?"),
+                      const Text("Secure with password?"),
                       Checkbox(
                           value: _secureWihtPassword,
                           onChanged: (onChanged) => setStateInsideDialog(
@@ -164,7 +160,6 @@ class _Channels extends State {
           Provider.of<UserService>(context, listen: false).getVisitedChannels(),
       builder: (context, snapshot) {
         final visitedChannels = snapshot.data;
-        print(visitedChannels);
         return Scaffold(
             appBar: AppBar(
               leading: Icon(Icons.account_circle_rounded),
@@ -173,7 +168,6 @@ class _Channels extends State {
             drawer: buildDrawer(),
             body: Column(
               children: [
-                //Text(visied.toString()),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: TextField(
@@ -201,7 +195,7 @@ class _Channels extends State {
         DrawerHeader(
           child: Row(
             children: [
-              Icon(Icons.account_circle_rounded),
+              const Icon(Icons.account_circle_rounded),
               StreamBuilder(
                   stream: Provider.of<UserService>(context).getUserName(),
                   builder: (context, snapshot) {

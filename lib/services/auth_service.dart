@@ -72,4 +72,19 @@ class AuthService extends ChangeNotifier {
       throw exception.code;
     }
   }
+
+  Future<bool> emailTaken(String email) async {
+    try {
+      List<String> signInMethods =
+          await FirebaseAuth.instance.fetchSignInMethodsForEmail(email);
+
+      if (signInMethods.isEmpty) {
+        return Future(() => false);
+      }
+      return Future(() => true);
+    } catch (e) {
+      print('Error checking email existence: $e');
+      return Future(() => true);
+    }
+  }
 }
