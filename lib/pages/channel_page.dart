@@ -35,13 +35,7 @@ class _ChannelPage extends State<ChannelPage> {
 
   Timestamp _oldestMessageTimeStamp = Timestamp.now();
 
-  bool _isSending = false;
-
   void _showSendingDialog() {
-    setState(() {
-      _isSending = true;
-    });
-
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -64,10 +58,6 @@ class _ChannelPage extends State<ChannelPage> {
   }
 
   void _hideSendingDialog() {
-    setState(() {
-      _isSending = false;
-    });
-
     Navigator.of(context, rootNavigator: true).pop();
   }
 
@@ -127,6 +117,47 @@ class _ChannelPage extends State<ChannelPage> {
         }
       });
     }
+  }
+
+  void _openImageViewer(Image image) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(
+              color: Colors.black.withOpacity(0.7),
+            ),
+            Material(
+              type: MaterialType.transparency,
+              child: Center(
+                child: SizedBox(
+                  width: MediaQuery.of(context).size.width,
+                  height: MediaQuery.of(context).size.height,
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        top: 16,
+                        left: 16,
+                        child: IconButton(
+                          icon: const Icon(Icons.close, color: Colors.white),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                      ),
+                      Center(child: image),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -226,7 +257,7 @@ class _ChannelPage extends State<ChannelPage> {
                     style: const TextStyle(
                       fontSize: 20.0,
                     ),
-                    maxLines: null, // Allows the text field to grow vertically
+                    maxLines: null,
                     decoration: const InputDecoration(
                       hintText: "Write message...",
                       hintStyle: TextStyle(color: Colors.black54),
@@ -293,13 +324,7 @@ class _ChannelPage extends State<ChannelPage> {
       stream: _messagesStreamController.stream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Column(
-            children: [
-              const Text(
-                  'snapshot.connectionState == ConnectionState.waiting\n\n'),
-              Text(snapshot.toString())
-            ],
-          );
+          return const CircularProgressIndicator();
         } else if (snapshot.hasError) {
           return Text("Error: ${snapshot.error}");
         } else if (snapshot.hasData) {
@@ -364,8 +389,13 @@ class _ChannelPage extends State<ChannelPage> {
                               } else if (snapshot.hasError)
                                 return const Text('Error loading image');
                               else {
-                                return SizedBox(
-                                    height: 200, child: Image.network(image));
+                                return GestureDetector(
+                                  onTap: () {
+                                    _openImageViewer(Image.network(image));
+                                  },
+                                  child: SizedBox(
+                                      height: 200, child: Image.network(image)),
+                                );
                               }
                             })
                   ]),
