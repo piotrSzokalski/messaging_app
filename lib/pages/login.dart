@@ -13,8 +13,9 @@ class Login extends StatefulWidget {
 
 class _Login extends State<Login> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  TextEditingController _emailController = TextEditingController();
-  TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _emailOrUsernameController =
+      TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
 
   bool _passwordObscured = true;
 
@@ -22,7 +23,7 @@ class _Login extends State<Login> {
     if (!_formKey.currentState!.validate()) {
       return;
     }
-    print("Email: ${_emailController.text}");
+    print("Email: ${_emailOrUsernameController.text}");
     print("Password: ${_passwordController.text}");
     final authService = Provider.of<AuthService>(context, listen: false);
 
@@ -31,12 +32,24 @@ class _Login extends State<Login> {
     });
 
     try {
-      await authService.singInWithEmailAndPassword(
-          _emailController.text, _passwordController.text);
+      if (_isEmailValid(_emailOrUsernameController.text)) {
+        await authService.singInWithEmailAndPassword(
+            _emailOrUsernameController.text, _passwordController.text);
+      } else {
+        await authService.singInWithUsernameAndPassword(
+            _emailOrUsernameController.text, _passwordController.text);
+      }
     } catch (e) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(e.toString())));
     }
+  }
+
+  bool _isEmailValid(String email) {
+    final emailRegExp = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    );
+    return emailRegExp.hasMatch(email);
   }
 
   _openPasswordRester(BuildContext context) {
@@ -47,14 +60,15 @@ class _Login extends State<Login> {
             return AlertDialog(
               title: const Text("Password rest"),
               content: Column(mainAxisSize: MainAxisSize.min, children: [
-                if (_emailController.text.isNotEmpty)
+                if (_emailOrUsernameController.text.isNotEmpty &&
+                    _isEmailValid(_emailOrUsernameController.text))
                   Text(
-                      "We will send password reset email to: ${_emailController.text}")
+                      "We will send password reset email to: ${_emailOrUsernameController.text}")
                 else
                   Column(children: [
                     const Text('Enter your email here'),
                     TextField(
-                      controller: _emailController,
+                      controller: _emailOrUsernameController,
                     ),
                   ]),
               ]),
@@ -66,7 +80,8 @@ class _Login extends State<Login> {
                     onPressed: () async {
                       try {
                         await Provider.of<AuthService>(context, listen: false)
-                            .resetPassword(_emailController.text);
+                            .resetPassword(_emailOrUsernameController.text);
+                        // ignore: use_build_context_synchronously
                         Navigator.pop(context);
                         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                             content: Text(
@@ -77,7 +92,7 @@ class _Login extends State<Login> {
                             content: Text("Couldn't send reset link $e")));
                       }
                     },
-                    child: Text('Rest'))
+                    child: const Text('Rest'))
               ],
             );
           });
@@ -100,7 +115,7 @@ class _Login extends State<Login> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
                     TextFormField(
-                      controller: _emailController,
+                      controller: _emailOrUsernameController,
                       keyboardType: TextInputType.emailAddress,
                       decoration:
                           const InputDecoration(labelText: 'Username or Email'),
@@ -140,7 +155,7 @@ class _Login extends State<Login> {
                     ),
                     Center(
                       child: Padding(
-                        padding: EdgeInsets.all(16.0),
+                        padding: const EdgeInsets.all(16.0),
                         child: GestureDetector(
                           onTap: () => _openPasswordRester(context),
                           child: const Text(

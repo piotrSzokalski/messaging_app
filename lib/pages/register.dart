@@ -14,30 +14,47 @@ class Register extends StatefulWidget {
 
 class _RegisterState extends State<Register> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  TextEditingController _usernameController = TextEditingController();
-  TextEditingController _emailController = TextEditingController();
-  TextEditingController _passwordController = TextEditingController();
-  TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
 
   bool _passwordObscured = true;
   bool _confirmPasswordObscured = true;
+
+  bool _isEmailValid(String email) {
+    final emailRegExp = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    );
+    return emailRegExp.hasMatch(email);
+  }
+
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    FirebaseAuth.instance.idTokenChanges().listen((event) {
-      router.goNamed("home");
-    });
-
     final authService = Provider.of<AuthService>(context, listen: false);
 
-    try {
-      await authService.register(_usernameController.text,
-          _emailController.text, _passwordController.text);
-    } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(e.toString())));
+    bool emailTaken = await authService.emailTaken(_emailController.text);
+    if (emailTaken) {
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("That email is already taken ")));
+    } else {
+      try {
+        await authService.register(_usernameController.text,
+            _emailController.text, _passwordController.text);
+        FirebaseAuth.instance.idTokenChanges().listen((event) {
+          router.goNamed("home");
+        });
+      } catch (e) {
+        // ignore: use_build_context_synchronously
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.toString())));
+        router.goNamed("register");
+      }
     }
   }
 
@@ -60,7 +77,7 @@ class _RegisterState extends State<Register> {
                       decoration: const InputDecoration(labelText: 'Username'),
                       validator: (String? value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter your usenamne';
+                          return 'Please enter your username';
                         }
                         return null;
                       },
@@ -72,6 +89,9 @@ class _RegisterState extends State<Register> {
                       validator: (String? value) {
                         if (value == null || value.isEmpty) {
                           return 'Please enter your email';
+                        }
+                        if (!_isEmailValid(_emailController.text)) {
+                          return ("Email format is invalid");
                         }
                         return null;
                       },
@@ -94,6 +114,9 @@ class _RegisterState extends State<Register> {
                       validator: (String? value) {
                         if (value == null || value.isEmpty) {
                           return 'Please enter your password';
+                        }
+                        if (_passwordController.text.length < 6) {
+                          return 'Password must contain at least 6 charters';
                         }
                         return null;
                       },
@@ -121,6 +144,7 @@ class _RegisterState extends State<Register> {
                             _confirmPasswordController.text) {
                           return 'Passwords do not mach';
                         }
+
                         return null;
                       },
                     ),

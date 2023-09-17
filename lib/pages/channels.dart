@@ -32,6 +32,8 @@ class _Channels extends State {
 
   final _channelPasswordController = TextEditingController();
 
+  final _searchQueryController = TextEditingController();
+
   bool newChannelNameValid = false;
 
   ChatService chatService = new ChatService();
@@ -42,7 +44,6 @@ class _Channels extends State {
 
     authService.logout();
     FirebaseAuth.instance.idTokenChanges().listen((event) {
-      print("going to login");
       router.goNamed("home");
     });
     router.goNamed("home");
@@ -52,7 +53,6 @@ class _Channels extends State {
     bool protected = await Provider.of<ChatService>(context, listen: false)
         .isLockedForUser(id);
     if (protected) {
-      print(id);
       router.go("/unlock/$id");
       return;
     }
@@ -106,11 +106,11 @@ class _Channels extends State {
                   if (_errorMessage.isNotEmpty)
                     Text(
                       _errorMessage,
-                      style: TextStyle(color: Colors.red),
+                      style: const TextStyle(color: Colors.red),
                     ),
                   Row(
                     children: [
-                      Text("Secure with password?"),
+                      const Text("Secure with password?"),
                       Checkbox(
                           value: _secureWihtPassword,
                           onChanged: (onChanged) => setStateInsideDialog(
@@ -155,30 +155,38 @@ class _Channels extends State {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          leading: Icon(Icons.account_circle_rounded),
-          title: Text("channels"),
-        ),
-        drawer: buildDrawer(),
-        body: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: TextField(
-                onChanged: _updateSearchQuery,
-                decoration: const InputDecoration(
-                  labelText: 'Search',
-                  prefixIcon: Icon(Icons.search),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(25.0)),
+    return FutureBuilder(
+      future:
+          Provider.of<UserService>(context, listen: false).getVisitedChannels(),
+      builder: (context, snapshot) {
+        final visitedChannels = snapshot.data;
+        return Scaffold(
+            appBar: AppBar(
+              leading: Icon(Icons.account_circle_rounded),
+              title: Text("channels"),
+            ),
+            drawer: buildDrawer(),
+            body: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextField(
+                    controller: _searchQueryController,
+                    onChanged: _updateSearchQuery,
+                    decoration: const InputDecoration(
+                      labelText: 'Search',
+                      prefixIcon: Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(25.0)),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-            buildChatList()
-          ],
-        ));
+                buildChatList(visitedChannels)
+              ],
+            ));
+      },
+    );
   }
 
   Drawer buildDrawer() {
@@ -187,7 +195,7 @@ class _Channels extends State {
         DrawerHeader(
           child: Row(
             children: [
-              Icon(Icons.account_circle_rounded),
+              const Icon(Icons.account_circle_rounded),
               StreamBuilder(
                   stream: Provider.of<UserService>(context).getUserName(),
                   builder: (context, snapshot) {
@@ -212,28 +220,69 @@ class _Channels extends State {
     );
   }
 
-  Expanded buildChatList() {
+  Expanded buildChatList(dynamic visitedChannels) {
     return Expanded(
       child: StreamBuilder(
-          stream: Provider.of<ChatService>(context).getChats(),
-          builder: (
-            context,
-            snapshot,
-          ) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return CircularProgressIndicator();
-            } else if (snapshot.hasData) {
-              final chatsList = snapshot.data as List<String>;
-              return ListView.builder(
-                  itemCount: chatsList.length,
-                  itemBuilder: (context, index) => ListTile(
-                        title: Text(chatsList[index].toString()),
-                        onTap: () => _openChannel(chatsList[index].toString()),
-                      ));
-            } else {
-              return const Text('no data');
-            }
-          }),
+        stream: Provider.of<ChatService>(context).getChats(),
+        builder: (
+          context,
+          snapshot,
+        ) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const CircularProgressIndicator();
+          } else if (snapshot.hasData) {
+            var chatsList = snapshot.data as List<Map<String, dynamic>>;
+
+            chatsList = chatsList
+                .where((element) => (element['id'] as String)
+                    .toLowerCase()
+                    .contains(_searchQueryController.text.toLowerCase()))
+                .toList();
+
+            chatsList.sort((a, b) {
+              final visitedA =
+                  (visitedChannels as List<String>).contains(a['id']);
+              final visitedB =
+                  (visitedChannels as List<String>).contains(b['id']);
+
+              if (visitedA && !visitedB) {
+                return -1;
+              } else if (!visitedA && visitedB) {
+                return 1;
+              }
+
+              return 0;
+            });
+
+            return ListView.builder(
+              itemCount: chatsList.length,
+              itemBuilder: (context, index) {
+                bool visited = (visitedChannels as List<String>)
+                    .contains(chatsList[index]['id']);
+                return ListTile(
+                  title: Text(
+                    chatsList[index]['id'].toString(),
+                    style: TextStyle(
+                      color: visited ? Colors.blue : Colors.black,
+                    ),
+                  ),
+                  trailing: Visibility(
+                    visible: chatsList[index]['locked'] == true,
+                    child: Icon(
+                      (visited || chatsList[index]['owner'] == user?.email)
+                          ? Icons.lock_open
+                          : Icons.lock,
+                    ),
+                  ),
+                  onTap: () => _openChannel(chatsList[index]['id'].toString()),
+                );
+              },
+            );
+          } else {
+            return const Text('no data');
+          }
+        },
+      ),
     );
   }
 }

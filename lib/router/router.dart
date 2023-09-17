@@ -11,7 +11,6 @@ import 'package:provider/provider.dart';
 
 import '../pages/channel_page.dart';
 
-//register
 final GoRouter router = GoRouter(
     debugLogDiagnostics: true,
     routes: <RouteBase>[

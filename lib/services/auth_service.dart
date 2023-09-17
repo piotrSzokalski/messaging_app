@@ -19,6 +19,28 @@ class AuthService extends ChangeNotifier {
     }
   }
 
+  Future<UserCredential> singInWithUsernameAndPassword(
+      String username, String password) async {
+    String email = "";
+    try {
+      var snapshot = await _firestore
+          .collection("users")
+          .where("username", isEqualTo: username)
+          .limit(1)
+          .get();
+      email = snapshot.docs[0]["email"];
+    } catch (e) {
+      throw Exception("No such user");
+    }
+    try {
+      UserCredential userCredential = await _firebaseAuth
+          .signInWithEmailAndPassword(email: email, password: password);
+      return userCredential;
+    } on FirebaseAuthException catch (exception) {
+      throw exception;
+    }
+  }
+
   Future<UserCredential> register(
       String username, String email, String password) async {
     try {
@@ -48,6 +70,21 @@ class AuthService extends ChangeNotifier {
       await _firebaseAuth.signOut();
     } on FirebaseAuthException catch (exception) {
       throw exception.code;
+    }
+  }
+
+  Future<bool> emailTaken(String email) async {
+    try {
+      List<String> signInMethods =
+          await FirebaseAuth.instance.fetchSignInMethodsForEmail(email);
+
+      if (signInMethods.isEmpty) {
+        return Future(() => false);
+      }
+      return Future(() => true);
+    } catch (e) {
+      print('Error checking email existence: $e');
+      return Future(() => true);
     }
   }
 }

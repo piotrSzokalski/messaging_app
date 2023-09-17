@@ -18,20 +18,81 @@ class ChatService extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
-  Stream<List<String>> getChats() {
+  Stream<List<Map<String, dynamic>>> getChats() {
     return _firestore
         .collection("chats")
-        .limit(100)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => doc.id).toList());
+        .map((snapshot) => snapshot.docs.map((doc) {
+              final bool isPasswordProtected =
+                  doc.data().containsKey('passwordSecured');
+              return {
+                'id': doc.id,
+                'locked': isPasswordProtected,
+                'owner': doc.data()['owner']
+              };
+            }).toList());
   }
 
-  Stream<List<Message>>? getMessages(String id) {
+  Future<List<Message>> getMessages(String id, Timestamp? startAt) async {
+    if (startAt == null) {
+      startAt = Timestamp.now();
+    }
+
+    final snapshot = await _firestore
+        .collection("chats")
+        .doc(id)
+        .collection("messages")
+        .orderBy("timestamp", descending: true)
+        .startAfter([startAt]) // Use startAfter with the same field and order
+        .limit(10)
+        .get();
+
+    final messages = snapshot.docs.map((doc) {
+      return Message(
+        id: doc.id,
+        timestamp: doc.data()['timestamp'],
+        author: doc.data()['author'],
+        text: doc.data()['text'],
+        images: List<String>.from(doc.data()['images'] as List),
+      );
+    }).toList();
+
+    return messages;
+  }
+
+  Future<List<Message>> getMessages2(String id, Timestamp? startAt) async {
+    if (startAt == null) {
+      startAt == Timestamp.now();
+    }
+    final snapshot = await _firestore
+        .collection("chats")
+        .doc(id)
+        .collection("messages")
+        .startAfter([startAt])
+        .orderBy("timestamp", descending: true)
+        .limit(10)
+        .get();
+
+    final messages = snapshot.docs.map((doc) {
+      return Message(
+        id: doc.id,
+        timestamp: doc.data()['timestamp'],
+        author: doc.data()['author'],
+        text: doc.data()['text'],
+        images: List<String>.from(doc.data()['images'] as List),
+      );
+    }).toList();
+
+    return messages;
+  }
+
+  Stream<List<Message>>? getMessagesStream(String id) {
     return _firestore
         .collection("chats")
         .doc(id)
         .collection("messages")
-        .orderBy("timestamp")
+        .orderBy("timestamp", descending: true)
+        .limit(1)
         .snapshots()
         .map((snapshot) {
       {
