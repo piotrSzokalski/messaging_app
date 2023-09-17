@@ -10,6 +10,9 @@ class UserService extends ChangeNotifier {
 
   Stream<String> getUserName() {
     String? uid = _firebaseAuth.currentUser?.uid;
+    if (uid == null) {
+      return Stream.empty();
+    }
     //print("UID");
     //print(uid);
     return _firestore

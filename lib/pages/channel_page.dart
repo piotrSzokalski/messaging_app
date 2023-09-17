@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -24,6 +25,20 @@ class _ChannelPage extends State<ChannelPage> {
   _ChannelPage(this._id);
 
   TextEditingController _inputController = TextEditingController();
+
+  ScrollController _scrollController = ScrollController();
+
+  int _limit = 10;
+
+  //////
+
+  StreamController<List<Message>> _messagesStreamController =
+      StreamController();
+
+  List<Message> _messagesList = [];
+
+  Timestamp _oldestMessageTimeStamp = Timestamp.now();
+  //////
 
   void _sendMessage() async {
     String? username = await Provider.of<UserService>(context, listen: false)
@@ -64,10 +79,65 @@ class _ChannelPage extends State<ChannelPage> {
     });
   }
 
+  _onScroll() {
+    if (_scrollController.offset >=
+            _scrollController.position.maxScrollExtent &&
+        !_scrollController.position.outOfRange) {
+      print("HERE");
+      //return;
+      Provider.of<ChatService>(context, listen: false)
+          .getMessages(_id!, _oldestMessageTimeStamp)
+          .then((messages) => _messagesList.addAll(messages))
+          .then((value) => _messagesStreamController.add(_messagesList))
+          .then((value) {
+        if (_messagesList.isNotEmpty) {
+          _oldestMessageTimeStamp = _messagesList.last.timestamp!;
+        }
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     Provider.of<UserService>(context, listen: false).addChannelTotVisited(_id!);
+    _scrollController.addListener(_onScroll);
+
+    //////
+
+    _messagesStreamController.add(_messagesList);
+    Provider.of<ChatService>(context, listen: false)
+        .getMessages(_id!, null)
+        .then((messages) => _messagesList.addAll(messages))
+        .then((value) => _messagesList.removeAt(0))
+        .then((value) => _messagesStreamController.add(_messagesList))
+        .then((value) {
+      if (_messagesList.isNotEmpty) {
+        _oldestMessageTimeStamp = _messagesList.last.timestamp!;
+      }
+    });
+
+    Provider.of<ChatService>(context, listen: false)
+        .getMessagesStream(_id!)
+        ?.listen((event) {
+      if (event.isNotEmpty) {
+        _messagesList.insert(0, event[0]);
+        if (_messagesList.length > 1) {
+          if (_messagesList[0] == _messagesList[1]) {
+            _messagesList.removeAt(1);
+          }
+        }
+        _messagesStreamController.add(_messagesList);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _inputController.dispose();
+    _scrollController.dispose();
+
+    super.dispose();
   }
 
   @override
@@ -184,9 +254,16 @@ class _ChannelPage extends State<ChannelPage> {
     );
   }
 
+  // StreamBuilder<List<Message>> buildMessages2(BuildContext context) {
+  //   return StreamBuilder(
+  //       stream: _messagesStreamController.stream,
+  //       builder: (context, snapshot) {});
+  // }
+
   StreamBuilder<List<Message>> buildMessages(BuildContext context) {
     return StreamBuilder(
-      stream: Provider.of<ChatService>(context).getMessages(_id!),
+      stream: _messagesStreamController
+          .stream, //Provider.of<ChatService>(context).getMessagesStream(_id!, _limit),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Column(
@@ -201,11 +278,18 @@ class _ChannelPage extends State<ChannelPage> {
         } else if (snapshot.hasData) {
           List<Message> messages = snapshot.data as List<Message>;
 
+          if (messages.length > 1) {
+            if (messages[0] == messages[1]) {
+              messages.removeAt(1);
+            }
+          }
+
           if (messages.isEmpty) {
             return const Text("No messages available");
           }
 
           return ListView.builder(
+            controller: _scrollController,
             itemCount: messages.length,
             itemBuilder: (context, index) {
               Message message = messages[index];
@@ -246,12 +330,15 @@ class _ChannelPage extends State<ChannelPage> {
                             future: precacheImage(NetworkImage(image), context),
                             builder: (context, snapshot) {
                               if (snapshot.connectionState ==
-                                  ConnectionState.waiting)
-                                return CircularProgressIndicator();
-                              else if (snapshot.hasError)
-                                return Text('Error loading image');
+                                  ConnectionState.waiting) {
+                                return const SizedBox(
+                                    height: 200,
+                                    child: CircularProgressIndicator());
+                              } else if (snapshot.hasError)
+                                return const Text('Error loading image');
                               else
-                                return Image.network(image);
+                                return SizedBox(
+                                    height: 200, child: Image.network(image));
                             })
                   ]),
                 ),
