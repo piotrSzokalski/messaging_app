@@ -196,6 +196,7 @@ class _ChannelPage extends State<ChannelPage> {
   void dispose() {
     _inputController.dispose();
     _scrollController.dispose();
+    _messagesStreamController.close();
 
     super.dispose();
   }
