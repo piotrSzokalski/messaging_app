@@ -160,93 +160,76 @@ class _ChannelPage extends State<ChannelPage> {
       alignment: Alignment.bottomLeft,
       child: Container(
         padding: const EdgeInsets.only(left: 10, bottom: 10, top: 10),
-        height: _imagesToSend.isEmpty ? 60 : 200,
         width: double.infinity,
         color: Colors.white,
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            GestureDetector(
-              onTap: () {},
-              child: Container(
-                height: 30,
-                width: 30,
-                decoration: BoxDecoration(
-                  color: Colors.lightBlue,
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                child: const Icon(
-                  Icons.add,
-                  color: Colors.white,
-                  size: 20,
-                ),
+            if (_imagesToSend.isNotEmpty)
+              Container(
+                height: 200, // Set a maximum height for the input area
+                child: buildInputImagesPreview(),
               ),
-            ),
-            const SizedBox(
-              width: 15,
-            ),
-            Expanded(
-              child: Container(
-                height: 300,
-                child: SizedBox(
-                  height: 200,
-                  width: 200,
-                  child: TextField(
-                    style: const TextStyle(
-                        height: 1.5, // change this to reflect the effect
-                        fontSize: 20.0),
-                    decoration: InputDecoration(
-                        prefix: _imagesToSend.isNotEmpty
-                            ? ListView.builder(
-                                itemCount: _imagesToSend.length,
-                                itemBuilder: (context, index) {
-                                  return SizedBox(
-                                      width: 100,
-                                      height: 100,
-                                      child: Stack(
-                                        children: [
-                                          Image.file(
-                                              File(_imagesToSend[index].path),
-                                              height: 100,
-                                              width: 100,
-                                              fit: BoxFit.cover),
-                                          Positioned(
-                                              top: 0,
-                                              right: 0,
-                                              child: IconButton(
-                                                icon: Icon(Icons.close),
-                                                onPressed: () =>
-                                                    _removeImage(index),
-                                              ))
-                                        ],
-                                      ));
-                                })
-                            : const Text(" "),
-                        hintText: "Write message...",
-                        hintStyle: TextStyle(color: Colors.black54),
-                        border: InputBorder.none),
-                    controller: _inputController,
+            Row(
+              children: <Widget>[
+                GestureDetector(
+                  onTap: () {},
+                  child: Container(
+                    height: 30,
+                    width: 30,
+                    decoration: BoxDecoration(
+                      color: Colors.lightBlue,
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: const Icon(
+                      Icons.add,
+                      color: Colors.white,
+                      size: 20,
+                    ),
                   ),
                 ),
-              ),
-            ),
-            IconButton(
-                icon: const Icon(Icons.image),
-                onPressed: () => _addImage(ImageSource.gallery)),
-            IconButton(
-                icon: const Icon(Icons.camera_alt),
-                onPressed: () => _addImage(ImageSource.camera)),
-            const SizedBox(
-              width: 15,
-            ),
-            FloatingActionButton(
-              onPressed: _sendMessage,
-              backgroundColor: Colors.blue,
-              elevation: 0,
-              child: const Icon(
-                Icons.send,
-                color: Colors.white,
-                size: 18,
-              ),
+                const SizedBox(
+                  width: 15,
+                ),
+                Expanded(
+                  child: Container(
+                    child: TextField(
+                      style: const TextStyle(
+                        fontSize: 20.0,
+                      ),
+                      maxLines:
+                          null, // Allows the text field to grow vertically
+                      decoration: InputDecoration(
+                        hintText: "Write message...",
+                        hintStyle: const TextStyle(color: Colors.black54),
+                        border: InputBorder.none,
+                      ),
+                      controller: _inputController,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.image),
+                  onPressed: () => _addImage(ImageSource.gallery),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.camera_alt),
+                  onPressed: () => _addImage(ImageSource.camera),
+                ),
+                const SizedBox(
+                  width: 15,
+                ),
+                FloatingActionButton(
+                  onPressed: _sendMessage,
+                  backgroundColor: Colors.blue,
+                  elevation: 0,
+                  child: const Icon(
+                    Icons.send,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -254,11 +237,28 @@ class _ChannelPage extends State<ChannelPage> {
     );
   }
 
-  // StreamBuilder<List<Message>> buildMessages2(BuildContext context) {
-  //   return StreamBuilder(
-  //       stream: _messagesStreamController.stream,
-  //       builder: (context, snapshot) {});
-  // }
+  ListView buildInputImagesPreview() {
+    return ListView.builder(
+        itemCount: _imagesToSend.length,
+        itemBuilder: (context, index) {
+          return SizedBox(
+              width: 100,
+              height: 100,
+              child: Stack(
+                children: [
+                  Image.file(File(_imagesToSend[index].path),
+                      height: 100, width: 100, fit: BoxFit.cover),
+                  Positioned(
+                      top: 0,
+                      right: 0,
+                      child: IconButton(
+                        icon: Icon(Icons.close),
+                        onPressed: () => _removeImage(index),
+                      ))
+                ],
+              ));
+        });
+  }
 
   StreamBuilder<List<Message>> buildMessages(BuildContext context) {
     return StreamBuilder(
